@@ -1,36 +1,144 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cabinet MARC — Modern Website
 
-## Getting Started
+A complete, production-ready redesign of cabinetmarc.org built with Next.js 15, TypeScript, Tailwind CSS, Clerk, and Supabase.
 
-First, run the development server:
+## Tech Stack
+
+| Tool | Purpose |
+|------|---------|
+| Next.js 16 (App Router) | Framework |
+| TypeScript | Type safety |
+| Tailwind CSS v4 | Styling |
+| Clerk v7 | Authentication |
+| Supabase | Database + Storage |
+| Framer Motion | Animations |
+| next-intl | i18n (FR/EN) |
+| Resend | Email |
+| React Hook Form + Zod | Forms |
+
+## Quick Start
+
+### 1. Install dependencies
+
+```bash
+cd C:/Projects/cabinet-marc
+npm install
+```
+
+### 2. Environment Variables
+
+Copy `.env.example` to `.env.local`:
+
+```bash
+copy .env.example .env.local
+```
+
+Fill in:
+- **Clerk**: publishable key + secret key from [clerk.com](https://clerk.com)
+- **Supabase**: URL + anon key + service role from [supabase.com](https://supabase.com)
+- **ADMIN_USER_IDS**: your Clerk user ID (find it in Clerk dashboard after first sign-in)
+- **Resend** (optional): API key from [resend.com](https://resend.com) for emails
+
+### 3. Setup Supabase
+
+Run the schema in your Supabase SQL editor:
+
+```sql
+-- Copy and run: supabase/schema.sql
+```
+
+This creates all tables + seed data (categories, testimonials, nav items, etc.)
+
+### 4. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+cabinet-marc/
+├── app/
+│   ├── page.tsx                    # Home page
+│   ├── (marketing)/                # Public pages (Navbar+Footer)
+│   │   ├── about/
+│   │   ├── courses/[slug]/
+│   │   ├── services/
+│   │   ├── team/
+│   │   ├── blog/[slug]/
+│   │   ├── contact/
+│   │   ├── privacy/ & terms/
+│   │   └── layout.tsx              # Marketing layout
+│   ├── (auth)/                     # Sign-in / Sign-up pages
+│   ├── (dashboard)/dashboard/      # User dashboard
+│   ├── (admin)/admin/              # Admin panel (protected)
+│   │   ├── page.tsx                # Dashboard overview
+│   │   ├── content/                # Content editor
+│   │   ├── courses/                # Course management
+│   │   ├── team/                   # Team management
+│   │   ├── media/                  # Media manager
+│   │   └── settings/               # Global settings
+│   └── api/                        # API routes
+├── components/
+│   ├── ui/                         # Button, Card, Input, etc.
+│   ├── layout/                     # Navbar, Footer
+│   ├── sections/                   # Hero, Stats, CourseCategories, etc.
+│   ├── admin/                      # Admin sidebar, header
+│   └── providers.tsx               # Clerk + React Query + Theme
+├── lib/
+│   ├── utils.ts
+│   ├── constants.ts
+│   ├── supabase.ts
+│   └── admin.ts                    # Admin auth guard
+├── types/                          # index.ts + supabase.ts
+├── messages/fr.json + en.json      # Translations
+├── i18n/request.ts                 # next-intl config
+└── supabase/schema.sql             # Database schema
+```
 
-## Learn More
+## Admin Panel
 
-To learn more about Next.js, take a look at the following resources:
+Visit `/admin` (requires admin Clerk user ID in `ADMIN_USER_IDS`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Section | What you can edit |
+|---------|------------------|
+| Dashboard | Overview stats |
+| Content | Every page section (hero title, subtitle, CTAs, descriptions, etc.) |
+| Formations | Add/edit/delete courses and categories |
+| Équipe | Add/edit/delete team members |
+| Médias | Upload images/videos to Supabase Storage |
+| Paramètres | Site name, colors, SEO meta, social links, contact info, email settings |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Pages
 
-## Deploy on Vercel
+| URL | Page |
+|-----|------|
+| `/` | Home (hero, stats, about, categories, testimonials, contact CTA) |
+| `/about` | About — mission, vision, values, timeline |
+| `/courses` | Courses with category filter |
+| `/courses/[slug]` | Course detail |
+| `/services` | Consulting, training, research, e-learning |
+| `/team` | Expert profiles |
+| `/blog` | Blog listing |
+| `/contact` | Contact form |
+| `/dashboard` | User dashboard (authenticated) |
+| `/admin` | Admin panel (admin role) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Build
+npm run build
+
+# Deploy to Vercel
+npx vercel
+```
+
+Add environment variables in your hosting dashboard.
+
+---
+
+© 2024 Cabinet MARC. All rights reserved.

@@ -1,0 +1,117 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "about": "À Propos",
+    "courses": "Formation",
+    "services": "Services",
+    "team": "Équipe",
+    "blog": "Blog",
+    "contact": "Contact",
+    "signin": "Se connecter",
+    "signup": "S'inscrire",
+    "dashboard": "Mon espace",
+    "signout": "Se déconnecter"
+  },
+  "hero": {
+    "badge": "Nouveau : E-Learning disponible",
+    "title": "L'excellence académique au service de l'Afrique",
+    "subtitle": "Conseil · Formation · Recherche · E-Learning",
+    "description": "Cabinet MARC vous accompagne dans votre développement professionnel et institutionnel grâce à une expertise pointue en Économie, Gestion, Droit, Statistiques, Entrepreneuriat et TICs.",
+    "cta_primary": "Explorer nos formations",
+    "cta_secondary": "Découvrir Cabinet MARC"
+  },
+  "about_preview": {
+    "badge": "À Propos de Nous",
+    "title": "Votre partenaire de confiance pour l'excellence",
+    "description": "Fondé avec la vision de démocratiser l'accès à l'expertise académique et professionnelle en Afrique centrale, Cabinet MARC s'est imposé comme une référence incontournable en matière de conseil, formation et recherche appliquée.",
+    "cta": "En savoir plus"
+  },
+  "courses": {
+    "badge": "Nos Domaines",
+    "title": "Des formations d'excellence dans 6 disciplines",
+    "description": "Chaque programme est conçu par des experts reconnus pour répondre aux exigences du marché africain et international.",
+    "cta": "Voir toutes les formations",
+    "learn_more": "En savoir plus",
+    "courses_available": "cours disponibles"
+  },
+  "stats": {
+    "title": "Cabinet MARC en chiffres"
+  },
+  "testimonials": {
+    "badge": "Témoignages",
+    "title": "Ce que disent nos clients",
+    "description": "La satisfaction de nos clients est notre plus grande récompense."
+  },
+  "contact_teaser": {
+    "badge": "Nous Contacter",
+    "title": "Prêt à développer votre excellence ?",
+    "description": "Notre équipe d'experts est à votre disposition pour répondre à vos besoins spécifiques en conseil, formation ou recherche.",
+    "cta_primary": "Nous écrire",
+    "cta_secondary": "Voir nos services"
+  },
+  "newsletter": {
+    "title": "Restez informé",
+    "description": "Abonnez-vous à notre newsletter pour recevoir nos dernières actualités, ressources et offres de formation.",
+    "placeholder": "Votre adresse email",
+    "cta": "S'abonner",
+    "success": "Merci ! Vous êtes abonné avec succès.",
+    "error": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "footer": {
+    "description": "Institution spécialisée en conseil, formation et recherche en Économie, Gestion, Droit, Statistiques, Entrepreneuriat et TICs.",
+    "quick_links": "Liens rapides",
+    "services": "Services",
+    "contact": "Contact",
+    "newsletter": "Newsletter",
+    "rights": "Tous droits réservés.",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation"
+  },
+  "about": {
+    "title": "À Propos de Cabinet MARC",
+    "mission_title": "Notre Mission",
+    "vision_title": "Notre Vision",
+    "values_title": "Nos Valeurs"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Nous sommes à votre écoute",
+    "form_name": "Nom complet",
+    "form_email": "Adresse email",
+    "form_phone": "Téléphone (optionnel)",
+    "form_subject": "Objet",
+    "form_service": "Service concerné",
+    "form_message": "Votre message",
+    "form_submit": "Envoyer le message",
+    "form_sending": "Envoi en cours...",
+    "form_success": "Message envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.",
+    "form_error": "Une erreur est survenue. Veuillez réessayer ou nous contacter directement par email."
+  },
+  "services": {
+    "title": "Nos Services",
+    "consulting_title": "Conseil & Expertise",
+    "consulting_desc": "Accompagnement stratégique personnalisé pour institutions, entreprises et organisations.",
+    "training_title": "Formation Professionnelle",
+    "training_desc": "Programmes sur mesure adaptés aux besoins spécifiques de vos équipes.",
+    "research_title": "Recherche Appliquée",
+    "research_desc": "Études, analyses et rapports de recherche de haute qualité.",
+    "elearning_title": "E-Learning",
+    "elearning_desc": "Plateforme d'apprentissage en ligne accessible partout, à tout moment."
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "not_found": "Page non trouvée",
+    "back_home": "Retour à l'accueil",
+    "read_more": "Lire la suite",
+    "view_all": "Voir tout",
+    "close": "Fermer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "filter": "Filtrer"
+  }
+}

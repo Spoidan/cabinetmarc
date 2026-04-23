@@ -1,0 +1,117 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "courses": "Training",
+    "services": "Services",
+    "team": "Team",
+    "blog": "Blog",
+    "contact": "Contact",
+    "signin": "Sign in",
+    "signup": "Sign up",
+    "dashboard": "My space",
+    "signout": "Sign out"
+  },
+  "hero": {
+    "badge": "New: E-Learning now available",
+    "title": "Academic excellence in service of Africa",
+    "subtitle": "Consulting · Training · Research · E-Learning",
+    "description": "Cabinet MARC supports your professional and institutional development with deep expertise in Economics, Management, Law, Statistics, Entrepreneurship and ICTs.",
+    "cta_primary": "Explore our courses",
+    "cta_secondary": "Discover Cabinet MARC"
+  },
+  "about_preview": {
+    "badge": "About Us",
+    "title": "Your trusted partner for excellence",
+    "description": "Founded with the vision of democratizing access to academic and professional expertise in Central Africa, Cabinet MARC has established itself as an undisputed reference in consulting, training and applied research.",
+    "cta": "Learn more"
+  },
+  "courses": {
+    "badge": "Our Domains",
+    "title": "Excellence training in 6 disciplines",
+    "description": "Each program is designed by recognized experts to meet the demands of African and international markets.",
+    "cta": "View all courses",
+    "learn_more": "Learn more",
+    "courses_available": "courses available"
+  },
+  "stats": {
+    "title": "Cabinet MARC in numbers"
+  },
+  "testimonials": {
+    "badge": "Testimonials",
+    "title": "What our clients say",
+    "description": "Our clients' satisfaction is our greatest reward."
+  },
+  "contact_teaser": {
+    "badge": "Contact Us",
+    "title": "Ready to develop your excellence?",
+    "description": "Our team of experts is available to address your specific needs in consulting, training or research.",
+    "cta_primary": "Write to us",
+    "cta_secondary": "View our services"
+  },
+  "newsletter": {
+    "title": "Stay informed",
+    "description": "Subscribe to our newsletter to receive our latest news, resources and training offers.",
+    "placeholder": "Your email address",
+    "cta": "Subscribe",
+    "success": "Thank you! You have successfully subscribed.",
+    "error": "An error occurred. Please try again."
+  },
+  "footer": {
+    "description": "Specialized institution in consulting, training and research in Economics, Management, Law, Statistics, Entrepreneurship and ICTs.",
+    "quick_links": "Quick links",
+    "services": "Services",
+    "contact": "Contact",
+    "newsletter": "Newsletter",
+    "rights": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use"
+  },
+  "about": {
+    "title": "About Cabinet MARC",
+    "mission_title": "Our Mission",
+    "vision_title": "Our Vision",
+    "values_title": "Our Values"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We are here to listen",
+    "form_name": "Full name",
+    "form_email": "Email address",
+    "form_phone": "Phone (optional)",
+    "form_subject": "Subject",
+    "form_service": "Related service",
+    "form_message": "Your message",
+    "form_submit": "Send message",
+    "form_sending": "Sending...",
+    "form_success": "Message sent successfully! We will get back to you as soon as possible.",
+    "form_error": "An error occurred. Please try again or contact us directly by email."
+  },
+  "services": {
+    "title": "Our Services",
+    "consulting_title": "Consulting & Expertise",
+    "consulting_desc": "Personalized strategic support for institutions, businesses and organizations.",
+    "training_title": "Professional Training",
+    "training_desc": "Tailored programs adapted to the specific needs of your teams.",
+    "research_title": "Applied Research",
+    "research_desc": "High-quality studies, analyses and research reports.",
+    "elearning_title": "E-Learning",
+    "elearning_desc": "Online learning platform accessible anywhere, anytime."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "not_found": "Page not found",
+    "back_home": "Back to home",
+    "read_more": "Read more",
+    "view_all": "View all",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter"
+  }
+}
