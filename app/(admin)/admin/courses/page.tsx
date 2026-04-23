@@ -1,27 +1,76 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Search, Edit, Trash2, Eye, BookOpen, MoreVertical } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Search, Trash2, Eye, BookOpen, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-const mockCourses = [
-  { id: "1", title: "Macroéconomie Avancée", category: "Économie", level: "Avancé", status: "active", students: 84, gradient: "from-emerald-500 to-teal-600" },
-  { id: "2", title: "Gestion de Projet PMI", category: "Gestion", level: "Intermédiaire", status: "active", students: 112, gradient: "from-sky-500 to-blue-600" },
-  { id: "3", title: "Droit des Affaires en Afrique", category: "Droit", level: "Débutant", status: "active", students: 67, gradient: "from-violet-500 to-purple-600" },
-  { id: "4", title: "Économétrie Appliquée", category: "Statistiques", level: "Avancé", status: "active", students: 45, gradient: "from-amber-500 to-orange-600" },
-  { id: "5", title: "Créer sa Startup en Afrique", category: "Entrepreneuriat", level: "Débutant", status: "active", students: 203, gradient: "from-rose-500 to-red-600" },
-  { id: "6", title: "Transformation Digitale", category: "TICs", level: "Intermédiaire", status: "draft", students: 0, gradient: "from-cyan-500 to-sky-600" },
-];
+type Course = {
+  id: string;
+  title_fr: string;
+  title_en: string;
+  level: string;
+  is_active: boolean;
+  is_featured: boolean;
+  is_free: boolean;
+  price: number;
+  instructor: string;
+  course_categories: { name_fr: string; gradient: string } | null;
+};
+
+const levelLabel: Record<string, string> = {
+  beginner: "Débutant",
+  intermediate: "Intermédiaire",
+  advanced: "Avancé",
+};
 
 export default function AdminCoursesPage() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  const filtered = mockCourses.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase()) ||
-    c.category.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    fetch("/api/admin/courses")
+      .then((r) => r.json())
+      .then(({ data }) => { setCourses(data ?? []); setLoading(false); })
+      .catch(() => { toast.error("Erreur de chargement"); setLoading(false); });
+  }, []);
+
+  const toggleActive = async (course: Course) => {
+    const res = await fetch("/api/admin/courses", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: course.id, is_active: !course.is_active }),
+    });
+    if (res.ok) {
+      setCourses((prev) => prev.map((c) => c.id === course.id ? { ...c, is_active: !course.is_active } : c));
+      toast.success(course.is_active ? "Formation désactivée" : "Formation activée");
+    } else {
+      toast.error("Erreur lors de la mise à jour");
+    }
+  };
+
+  const deleteCourse = async (id: string, title: string) => {
+    if (!confirm(`Supprimer "${title}" définitivement ?`)) return;
+    const res = await fetch("/api/admin/courses", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      setCourses((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Formation supprimée");
+    } else {
+      toast.error("Erreur lors de la suppression");
+    }
+  };
+
+  const filtered = courses.filter(
+    (c) =>
+      c.title_fr.toLowerCase().includes(search.toLowerCase()) ||
+      (c.course_categories?.name_fr ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -29,15 +78,16 @@ export default function AdminCoursesPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">Formations</h1>
-          <p className="text-muted-foreground mt-1">{mockCourses.length} formations au total</p>
+          <p className="text-muted-foreground mt-1">
+            {loading ? "Chargement..." : `${courses.length} formation${courses.length !== 1 ? "s" : ""} au total`}
+          </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={() => toast.info("Ajoutez vos formations directement depuis Supabase ou via l'API.")}>
           <Plus className="w-4 h-4" />
           Nouvelle formation
         </Button>
       </div>
 
-      {/* Search */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -48,70 +98,93 @@ export default function AdminCoursesPage() {
         />
       </div>
 
-      {/* Table */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Formation</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Catégorie</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Niveau</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Étudiants</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Statut</th>
-                <th className="text-right px-5 py-3.5 text-xs font-semibold text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((course, i) => (
-                <tr key={course.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${course.gradient} flex items-center justify-center shrink-0`}>
-                        <BookOpen className="w-4 h-4 text-white/70" />
-                      </div>
-                      <span className="font-medium text-sm">{course.title}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-sm text-muted-foreground">{course.category}</td>
-                  <td className="px-5 py-4 text-sm text-muted-foreground">{course.level}</td>
-                  <td className="px-5 py-4 text-sm font-medium">{course.students}</td>
-                  <td className="px-5 py-4">
-                    <Badge variant={course.status === "active" ? "emerald" : "outline"} className="text-xs">
-                      {course.status === "active" ? "Actif" : "Brouillon"}
-                    </Badge>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => toast.info("Prévisualisation...")}
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                        onClick={() => toast.info("Édition...")}
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        className="w-8 h-8 rounded-lg hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
-                        onClick={() => toast.error("Suppression...")}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filtered.length === 0 && (
+        {loading ? (
           <div className="py-16 text-center text-muted-foreground">
-            Aucune formation trouvée.
+            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-3" />
+            Chargement des formations...
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Formation</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Catégorie</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Niveau</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Prix</th>
+                  <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Statut</th>
+                  <th className="text-right px-5 py-3.5 text-xs font-semibold text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((course) => (
+                  <tr key={course.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-9 h-9 rounded-xl bg-gradient-to-br ${course.course_categories?.gradient ?? "from-gray-400 to-gray-600"} flex items-center justify-center shrink-0`}
+                        >
+                          <BookOpen className="w-4 h-4 text-white/70" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{course.title_fr}</p>
+                          {course.title_en && <p className="text-xs text-muted-foreground">{course.title_en}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-muted-foreground">{course.course_categories?.name_fr ?? "—"}</td>
+                    <td className="px-5 py-4 text-sm text-muted-foreground">{levelLabel[course.level] ?? course.level}</td>
+                    <td className="px-5 py-4 text-sm">
+                      {course.is_free ? (
+                        <Badge variant="emerald" className="text-xs">Gratuit</Badge>
+                      ) : (
+                        `${course.price} BIF`
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      <Badge variant={course.is_active ? "emerald" : "outline"} className="text-xs">
+                        {course.is_active ? "Actif" : "Brouillon"}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => window.open(`/courses/${course.id}`, "_blank")}
+                          title="Prévisualiser"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => toggleActive(course)}
+                          title={course.is_active ? "Désactiver" : "Activer"}
+                        >
+                          {course.is_active
+                            ? <ToggleRight className="w-3.5 h-3.5 text-emerald-500" />
+                            : <ToggleLeft className="w-3.5 h-3.5" />}
+                        </button>
+                        <button
+                          className="w-8 h-8 rounded-lg hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => deleteCourse(course.id, course.title_fr)}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filtered.length === 0 && (
+              <div className="py-16 text-center text-muted-foreground">
+                {courses.length === 0
+                  ? "Aucune formation. Ajoutez vos premières formations dans Supabase."
+                  : "Aucune formation trouvée pour cette recherche."}
+              </div>
+            )}
           </div>
         )}
       </div>

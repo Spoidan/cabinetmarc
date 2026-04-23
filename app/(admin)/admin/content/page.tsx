@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { toast } from "sonner";
-import { Save, Eye, Pencil, Globe, Home, Info, BookOpen, Phone, Newspaper } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, Eye, Globe, Home, Info, BookOpen, Phone, Newspaper, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 const pages = [
   { key: "home", label: "Page d'accueil", icon: Home },
@@ -18,32 +17,107 @@ const pages = [
   { key: "blog", label: "Blog", icon: Newspaper },
 ];
 
-// Hero section editor
-function HeroEditor() {
-  const [data, setData] = useState({
-    title: "L'excellence académique au service de l'Afrique",
-    subtitle: "Conseil · Formation · Recherche · E-Learning",
-    description: "Cabinet MARC vous accompagne dans votre développement professionnel...",
+const homeSections = [
+  { key: "hero", label: "Héro" },
+  { key: "stats", label: "Statistiques" },
+  { key: "about", label: "À Propos" },
+  { key: "categories", label: "Catégories" },
+  { key: "testimonials", label: "Témoignages" },
+  { key: "contact", label: "Contact" },
+];
+
+const otherSections: Record<string, Array<{ key: string; label: string }>> = {
+  about: [
+    { key: "hero", label: "En-tête" },
+    { key: "mission", label: "Mission & Valeurs" },
+  ],
+  courses: [
+    { key: "hero", label: "En-tête" },
+    { key: "description", label: "Description" },
+  ],
+  contact: [
+    { key: "hero", label: "En-tête" },
+    { key: "info", label: "Informations" },
+  ],
+  blog: [
+    { key: "hero", label: "En-tête" },
+    { key: "description", label: "Description" },
+  ],
+};
+
+type HeroData = {
+  id?: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  cta_primary_text: string;
+  cta_primary_href: string;
+  cta_secondary_text: string;
+  cta_secondary_href: string;
+  badge_text: string;
+  locale: string;
+};
+
+function HeroEditor({ locale }: { locale: string }) {
+  const [data, setData] = useState<HeroData>({
+    title: "",
+    subtitle: "",
+    description: "",
     cta_primary_text: "Explorer nos formations",
     cta_primary_href: "/courses",
-    cta_secondary_text: "Découvrir MARC",
+    cta_secondary_text: "En savoir plus",
     cta_secondary_href: "/about",
-    badge_text: "Nouveau : E-Learning disponible",
+    badge_text: "",
+    locale,
   });
+  const [loadingHero, setLoadingHero] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLoadingHero(true);
+    fetch(`/api/admin/hero?locale=${locale}`)
+      .then((r) => r.json())
+      .then(({ data: d }) => {
+        if (d) setData(d);
+        setLoadingHero(false);
+      })
+      .catch(() => setLoadingHero(false));
+  }, [locale]);
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    toast.success("Section héro mise à jour !");
+    const res = await fetch("/api/admin/hero", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...data, locale }),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      setData(json.data);
+      toast.success("Section héro mise à jour !");
+    } else {
+      toast.error(json.error ?? "Erreur lors de l'enregistrement");
+    }
     setSaving(false);
   };
+
+  if (loadingHero) {
+    return (
+      <div className="py-12 text-center text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>Badge (accroche)</Label>
-        <Input value={data.badge_text} onChange={(e) => setData({ ...data, badge_text: e.target.value })} />
+        <Input
+          value={data.badge_text ?? ""}
+          onChange={(e) => setData({ ...data, badge_text: e.target.value })}
+          placeholder="Ex: Nouveau : E-Learning disponible"
+        />
       </div>
       <div className="space-y-2">
         <Label>Titre principal</Label>
@@ -55,7 +129,11 @@ function HeroEditor() {
       </div>
       <div className="space-y-2">
         <Label>Description</Label>
-        <Textarea value={data.description} onChange={(e) => setData({ ...data, description: e.target.value })} className="min-h-[100px]" />
+        <Textarea
+          value={data.description}
+          onChange={(e) => setData({ ...data, description: e.target.value })}
+          className="min-h-[100px]"
+        />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -76,7 +154,88 @@ function HeroEditor() {
         </div>
       </div>
       <Button onClick={handleSave} disabled={saving} className="gap-2">
-        <Save className="w-4 h-4" />
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+        {saving ? "Enregistrement..." : "Enregistrer"}
+      </Button>
+    </div>
+  );
+}
+
+type PageContent = { id?: string; content: string };
+
+function PageEditor({
+  pageKey,
+  sectionKey,
+  locale,
+  label,
+}: {
+  pageKey: string;
+  sectionKey: string;
+  locale: string;
+  label: string;
+}) {
+  const [data, setData] = useState<PageContent>({ content: "" });
+  const [loadingContent, setLoadingContent] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLoadingContent(true);
+    fetch(`/api/content?page=${pageKey}&locale=${locale}`)
+      .then((r) => r.json())
+      .then(({ data: rows }) => {
+        const row = (rows ?? []).find((r: { section_key: string }) => r.section_key === sectionKey);
+        if (row) setData(row);
+        else setData({ content: "" });
+        setLoadingContent(false);
+      })
+      .catch(() => setLoadingContent(false));
+  }, [pageKey, sectionKey, locale]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await fetch("/api/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...data,
+        page_key: pageKey,
+        section_key: sectionKey,
+        locale,
+        content_type: "text",
+      }),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      setData(json.data);
+      toast.success("Contenu mis à jour !");
+    } else {
+      toast.error(json.error ?? "Erreur lors de l'enregistrement");
+    }
+    setSaving(false);
+  };
+
+  if (loadingContent) {
+    return (
+      <div className="py-12 text-center text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <Textarea
+          value={data.content}
+          onChange={(e) => setData({ ...data, content: e.target.value })}
+          className="min-h-[200px] font-mono text-sm"
+          placeholder="Entrez le contenu de cette section..."
+        />
+        <p className="text-xs text-muted-foreground">Ce texte est affiché dans la section correspondante de votre site.</p>
+      </div>
+      <Button onClick={handleSave} disabled={saving} className="gap-2">
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         {saving ? "Enregistrement..." : "Enregistrer"}
       </Button>
     </div>
@@ -86,6 +245,14 @@ function HeroEditor() {
 export default function ContentPage() {
   const [activePage, setActivePage] = useState("home");
   const [activeSection, setActiveSection] = useState("hero");
+  const [locale, setLocale] = useState("fr");
+
+  const currentSections = activePage === "home" ? homeSections : (otherSections[activePage] ?? []);
+
+  const handlePageChange = (key: string) => {
+    setActivePage(key);
+    setActiveSection(key === "home" ? "hero" : (otherSections[key]?.[0]?.key ?? "hero"));
+  };
 
   return (
     <div className="max-w-5xl">
@@ -95,16 +262,17 @@ export default function ContentPage() {
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6">
-        {/* Pages nav */}
         <div className="lg:col-span-1">
           <div className="bg-card rounded-2xl border border-border p-4 space-y-1">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-3">Pages</p>
             {pages.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
-                onClick={() => { setActivePage(key); setActiveSection("hero"); }}
+                onClick={() => handlePageChange(key)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${
-                  activePage === key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  activePage === key
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -114,65 +282,64 @@ export default function ContentPage() {
           </div>
         </div>
 
-        {/* Editor */}
         <div className="lg:col-span-3">
           <div className="bg-card rounded-2xl border border-border">
-            {/* Editor header */}
             <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
                 <Badge variant="navy">{pages.find((p) => p.key === activePage)?.label}</Badge>
-                <span className="text-sm text-muted-foreground capitalize">{activeSection}</span>
+                <span className="text-sm text-muted-foreground capitalize">
+                  {currentSections.find((s) => s.key === activeSection)?.label ?? activeSection}
+                </span>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => window.open(`/${activePage === "home" ? "" : activePage}`, "_blank")}
+                >
                   <Eye className="w-3.5 h-3.5" />
-                  Prévisualiser
+                  Voir
                 </Button>
-                <Button variant="outline" size="sm" className="gap-2">
+                <button
+                  onClick={() => setLocale((l) => (l === "fr" ? "en" : "fr"))}
+                  className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors flex items-center gap-1.5"
+                >
                   <Globe className="w-3.5 h-3.5" />
-                  FR / EN
-                </Button>
+                  {locale.toUpperCase()}
+                </button>
               </div>
             </div>
 
-            {/* Section tabs */}
-            {activePage === "home" && (
+            {currentSections.length > 1 && (
               <div className="flex gap-1 p-3 border-b border-border overflow-x-auto">
-                {["hero", "stats", "about", "categories", "testimonials", "contact"].map((s) => (
+                {currentSections.map((s) => (
                   <button
-                    key={s}
-                    onClick={() => setActiveSection(s)}
+                    key={s.key}
+                    onClick={() => setActiveSection(s.key)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                      activeSection === s ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                      activeSection === s.key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
                     }`}
                   >
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                    {s.label}
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Editor content */}
             <div className="p-6">
-              {activePage === "home" && activeSection === "hero" && <HeroEditor />}
-
-              {activePage === "home" && activeSection !== "hero" && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Pencil className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">Éditeur section &quot;{activeSection}&quot;</p>
-                  <p className="text-sm mt-1">Connectez Supabase pour activer l&apos;édition complète.</p>
-                </div>
+              {activePage === "home" && activeSection === "hero" && (
+                <HeroEditor key={`hero-${locale}`} locale={locale} />
               )}
 
-              {activePage !== "home" && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Pencil className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">Éditeur de page &quot;{pages.find((p) => p.key === activePage)?.label}&quot;</p>
-                  <p className="text-sm mt-1">Connectez Supabase pour activer l&apos;édition complète du contenu.</p>
-                  <Button className="mt-4" variant="outline" size="sm">
-                    Configurer Supabase
-                  </Button>
-                </div>
+              {(activePage !== "home" || activeSection !== "hero") && (
+                <PageEditor
+                  key={`${activePage}-${activeSection}-${locale}`}
+                  pageKey={activePage}
+                  sectionKey={activeSection}
+                  locale={locale}
+                  label={`Contenu — ${pages.find((p) => p.key === activePage)?.label} / ${currentSections.find((s) => s.key === activeSection)?.label ?? activeSection}`}
+                />
               )}
             </div>
           </div>

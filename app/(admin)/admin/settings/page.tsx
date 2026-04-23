@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Save, Globe, Palette, Type, Share2, Search, Mail } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, Globe, Palette, Type, Share2, Search, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,40 +19,97 @@ const sections = [
   { key: "email", label: "Email", icon: Mail },
 ];
 
+const headingFonts = ["Playfair Display", "Merriweather", "Lora", "Georgia", "Inter", "Roboto"];
+const bodyFonts = ["Inter", "Roboto", "Open Sans", "Lato", "Source Sans Pro", "Nunito"];
+
+type Settings = {
+  id?: string;
+  site_name: string;
+  site_tagline: string;
+  site_description: string;
+  contact_email: string;
+  contact_phone: string;
+  contact_address: string;
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+  font_heading: string;
+  font_body: string;
+  meta_title: string;
+  meta_description: string;
+  google_analytics_id: string;
+  social_facebook: string;
+  social_twitter: string;
+  social_linkedin: string;
+  social_youtube: string;
+  footer_text: string;
+};
+
+const defaults: Settings = {
+  site_name: "Cabinet MARC",
+  site_tagline: "Excellence en Conseil, Formation & Recherche",
+  site_description: "",
+  contact_email: "info@cabinetmarc.org",
+  contact_phone: "+257 00 000 000",
+  contact_address: "Bujumbura, Burundi",
+  primary_color: "#059669",
+  secondary_color: "#0A0F1E",
+  accent_color: "#D97706",
+  font_heading: "Playfair Display",
+  font_body: "Inter",
+  meta_title: "Cabinet MARC | Conseil, Formation & E-Learning au Burundi",
+  meta_description: "",
+  google_analytics_id: "",
+  social_facebook: "",
+  social_twitter: "",
+  social_linkedin: "",
+  social_youtube: "",
+  footer_text: "© 2024 Cabinet MARC. Tous droits réservés.",
+};
+
 export default function AdminSettingsPage() {
   const [activeSection, setActiveSection] = useState("general");
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [settings, setSettings] = useState<Settings>(defaults);
 
-  const [settings, setSettings] = useState({
-    site_name: "Cabinet MARC",
-    site_tagline: "Excellence en Conseil, Formation & Recherche",
-    site_description: "Cabinet MARC est une institution spécialisée en Économie, Gestion, Droit, Statistiques, Entrepreneuriat et TICs.",
-    contact_email: "info@cabinetmarc.org",
-    contact_phone: "+257 00 000 000",
-    contact_address: "Bujumbura, Burundi",
-    primary_color: "#059669",
-    secondary_color: "#0A0F1E",
-    accent_color: "#D97706",
-    meta_title: "Cabinet MARC | Conseil, Formation & E-Learning au Burundi",
-    meta_description: "Excellence en conseil, formation professionnelle et e-learning...",
-    google_analytics_id: "",
-    social_facebook: "",
-    social_twitter: "",
-    social_linkedin: "",
-    social_youtube: "",
-    footer_text: "© 2024 Cabinet MARC. Tous droits réservés.",
-    resend_from: "contact@cabinetmarc.org",
-    resend_to: "info@cabinetmarc.org",
-  });
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then(({ data }) => {
+        if (data) setSettings(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const update = (key: string, value: string) =>
+    setSettings((prev) => ({ ...prev, [key]: value }));
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    toast.success("Paramètres enregistrés !");
+    const res = await fetch("/api/admin/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      setSettings(json.data);
+      toast.success("Paramètres enregistrés !");
+    } else {
+      toast.error(json.error ?? "Erreur lors de l'enregistrement");
+    }
     setSaving(false);
   };
 
-  const update = (key: string, value: string) => setSettings((prev) => ({ ...prev, [key]: value }));
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl">
@@ -62,7 +119,6 @@ export default function AdminSettingsPage() {
       </div>
 
       <div className="grid lg:grid-cols-4 gap-6">
-        {/* Sections nav */}
         <div className="lg:col-span-1">
           <div className="bg-card rounded-2xl border border-border p-4 space-y-1">
             {sections.map(({ key, label, icon: Icon }) => (
@@ -70,7 +126,9 @@ export default function AdminSettingsPage() {
                 key={key}
                 onClick={() => setActiveSection(key)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${
-                  activeSection === key ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  activeSection === key
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -80,12 +138,11 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Settings form */}
         <div className="lg:col-span-3 bg-card rounded-2xl border border-border p-6">
           <div className="flex items-center justify-between mb-6">
             <Badge variant="navy">{sections.find((s) => s.key === activeSection)?.label}</Badge>
             <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2">
-              <Save className="w-3.5 h-3.5" />
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               {saving ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </div>
@@ -151,21 +208,72 @@ export default function AdminSettingsPage() {
             </div>
           )}
 
+          {activeSection === "typography" && (
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <Label>Police des titres</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {headingFonts.map((font) => (
+                    <button
+                      key={font}
+                      onClick={() => update("font_heading", font)}
+                      className={`px-4 py-3 rounded-xl border text-sm text-left transition-colors ${
+                        settings.font_heading === font
+                          ? "border-primary bg-primary/5 text-primary font-medium"
+                          : "border-border hover:border-primary/50 hover:bg-muted"
+                      }`}
+                      style={{ fontFamily: font }}
+                    >
+                      {font}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                <Label>Police du texte courant</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {bodyFonts.map((font) => (
+                    <button
+                      key={font}
+                      onClick={() => update("font_body", font)}
+                      className={`px-4 py-3 rounded-xl border text-sm text-left transition-colors ${
+                        settings.font_body === font
+                          ? "border-primary bg-primary/5 text-primary font-medium"
+                          : "border-border hover:border-primary/50 hover:bg-muted"
+                      }`}
+                      style={{ fontFamily: font }}
+                    >
+                      {font}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeSection === "seo" && (
             <div className="space-y-5">
               <div className="space-y-2">
-                <Label>Titre méta (titre par défaut)</Label>
+                <Label>Titre méta</Label>
                 <Input value={settings.meta_title} onChange={(e) => update("meta_title", e.target.value)} />
-                <p className="text-xs text-muted-foreground">{settings.meta_title.length} / 60 caractères</p>
+                <p className="text-xs text-muted-foreground">{settings.meta_title.length} / 60 caractères recommandés</p>
               </div>
               <div className="space-y-2">
                 <Label>Description méta</Label>
-                <Textarea value={settings.meta_description} onChange={(e) => update("meta_description", e.target.value)} />
-                <p className="text-xs text-muted-foreground">{settings.meta_description.length} / 160 caractères</p>
+                <Textarea
+                  value={settings.meta_description}
+                  onChange={(e) => update("meta_description", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">{settings.meta_description.length} / 160 caractères recommandés</p>
               </div>
               <div className="space-y-2">
                 <Label>Google Analytics ID</Label>
-                <Input placeholder="G-XXXXXXXXXX" value={settings.google_analytics_id} onChange={(e) => update("google_analytics_id", e.target.value)} />
+                <Input
+                  placeholder="G-XXXXXXXXXX"
+                  value={settings.google_analytics_id}
+                  onChange={(e) => update("google_analytics_id", e.target.value)}
+                />
               </div>
             </div>
           )}
@@ -174,7 +282,7 @@ export default function AdminSettingsPage() {
             <div className="space-y-5">
               {[
                 { key: "social_facebook", label: "Facebook URL" },
-                { key: "social_twitter", label: "Twitter/X URL" },
+                { key: "social_twitter", label: "Twitter / X URL" },
                 { key: "social_linkedin", label: "LinkedIn URL" },
                 { key: "social_youtube", label: "YouTube URL" },
               ].map(({ key, label }) => (
@@ -192,24 +300,13 @@ export default function AdminSettingsPage() {
 
           {activeSection === "email" && (
             <div className="space-y-5">
-              <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 p-4 text-sm text-amber-700 dark:text-amber-400">
-                Configurez votre clé Resend dans le fichier <code>.env.local</code> pour activer l&apos;envoi d&apos;emails.
+              <div className="rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 p-4 text-sm text-blue-700 dark:text-blue-400">
+                Configurez <code>RESEND_API_KEY</code> dans vos variables d&apos;environnement Vercel pour activer l&apos;envoi d&apos;emails.
               </div>
               <div className="space-y-2">
-                <Label>Email expéditeur</Label>
-                <Input value={settings.resend_from} onChange={(e) => update("resend_from", e.target.value)} />
+                <Label>Email de contact (expéditeur)</Label>
+                <Input value={settings.contact_email} onChange={(e) => update("contact_email", e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label>Email destinataire (notifications)</Label>
-                <Input value={settings.resend_to} onChange={(e) => update("resend_to", e.target.value)} />
-              </div>
-            </div>
-          )}
-
-          {(activeSection === "typography") && (
-            <div className="py-12 text-center text-muted-foreground">
-              <Type className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p>Sélection de typographie — disponible après connexion Supabase.</p>
             </div>
           )}
         </div>
