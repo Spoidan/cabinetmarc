@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
-import { Menu, X, BookOpen, Moon, Sun, Globe, ChevronDown } from "lucide-react";
+import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
+import { Menu, X, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -37,14 +38,10 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  React.useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  React.useEffect(() => { setIsOpen(false); }, [pathname]);
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
-  };
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <header
@@ -57,21 +54,25 @@ export function Navbar() {
     >
       <div className="container mx-auto">
         <div className="flex items-center justify-between h-16 lg:h-20">
+
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center shadow-lg shadow-primary/30 group-hover:shadow-primary/50 transition-shadow">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-background" />
+            <div className="relative w-10 h-10 shrink-0">
+              <Image
+                src="/logo.png"
+                alt="Cabinet MARC"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
-            <div className="hidden sm:block">
-              <span className="text-lg font-bold tracking-tight text-foreground">
-                Cabinet <span className="text-primary">MARC</span>
-              </span>
-              <p className="text-[10px] text-muted-foreground leading-none -mt-0.5 tracking-wider uppercase">
-                Excellence & Innovation
+            <div className="hidden sm:block leading-tight">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-widest leading-none mb-0.5">
+                Le Cabinet
               </p>
+              <span className="text-lg font-bold tracking-tight" style={{ color: "#7B3A10" }}>
+                MARC
+              </span>
             </div>
           </Link>
 
@@ -100,9 +101,8 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Right actions */}
+          {/* Actions */}
           <div className="flex items-center gap-2">
-            {/* Theme toggle */}
             {mounted && (
               <button
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -124,15 +124,10 @@ export function Navbar() {
               </div>
             ) : (
               <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "w-9 h-9 rounded-xl ring-2 ring-primary/20",
-                  },
-                }}
+                appearance={{ elements: { avatarBox: "w-9 h-9 rounded-xl ring-2 ring-primary/20" } }}
               />
             )}
 
-            {/* Mobile menu button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-muted transition-colors"

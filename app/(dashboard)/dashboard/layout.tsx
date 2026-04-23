@@ -2,11 +2,12 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import { BookOpen, LayoutDashboard, GraduationCap, User, Settings, Home } from "lucide-react";
+import { BookOpen, LayoutDashboard, GraduationCap, User, Settings, Home, Award } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/dashboard/courses", label: "Mes formations", icon: GraduationCap },
+  { href: "/dashboard/certificates", label: "Mes certificats", icon: Award },
   { href: "/dashboard/profile", label: "Mon profil", icon: User },
   { href: "/dashboard/settings", label: "Paramètres", icon: Settings },
 ];

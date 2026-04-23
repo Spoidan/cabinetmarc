@@ -12,12 +12,12 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/contact(.*)",
   "/api/newsletter(.*)",
+  "/api/courses(.*)",
+  "/api/lessons(.*)",
+  "/verify(.*)",
   "/privacy(.*)",
   "/terms(.*)",
 ]);
-
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
-const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {

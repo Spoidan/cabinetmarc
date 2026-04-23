@@ -49,6 +49,11 @@ const config: Config = {
           foreground: "hsl(var(--card-foreground))",
         },
         brand: {
+          brown: "#7B3A10",
+          "brown-light": "#C4873A",
+          dark: "#1A1A1A",
+          "dark-soft": "#2A2A2A",
+          /* kept for category gradients */
           navy: "#0A0F1E",
           "navy-light": "#151C34",
           emerald: "#059669",
@@ -98,8 +103,6 @@ const config: Config = {
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "hero-pattern": "url('/images/hero-bg.jpg')",
-        "noise": "url('/images/noise.png')",
       },
       typography: {
         DEFAULT: {
@@ -107,6 +110,8 @@ const config: Config = {
             maxWidth: "none",
             color: "hsl(var(--foreground))",
             a: { color: "hsl(var(--primary))", textDecoration: "none" },
+            h2: { color: "hsl(var(--foreground))" },
+            h3: { color: "hsl(var(--foreground))" },
           },
         },
       },
