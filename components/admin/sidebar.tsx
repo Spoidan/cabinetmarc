@@ -1,83 +1,151 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BookOpen, LayoutDashboard, FileText, BookMarked, Users, Image,
-  Settings, Home, ChevronRight, Shield
+  LayoutDashboard,
+  FolderTree,
+  BookOpen,
+  Layers,
+  HelpCircle,
+  Users,
+  GraduationCap,
+  UserCog,
+  Newspaper,
+  FileText,
+  Image as ImageIcon,
+  BarChart3,
+  Award,
+  Wallet,
+  Settings,
+  Home,
+  ClipboardList,
+  type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/content", label: "Contenu", icon: FileText },
-  { href: "/admin/courses", label: "Formations", icon: BookMarked },
-  { href: "/admin/team", label: "Équipe", icon: Users },
-  { href: "/admin/media", label: "Médias", icon: Image },
-  { href: "/admin/settings", label: "Paramètres", icon: Settings },
+type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean };
+type Group = { title: string; items: Item[] };
+
+const GROUPS: Group[] = [
+  {
+    title: "",
+    items: [
+      { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
+    ],
+  },
+  {
+    title: "Catalogue",
+    items: [
+      { href: "/admin/categories", label: "Catégories", icon: FolderTree },
+      { href: "/admin/cours", label: "Cours", icon: BookOpen },
+      { href: "/admin/lecons", label: "Modules & Leçons", icon: Layers },
+      { href: "/admin/quiz", label: "Quiz", icon: HelpCircle },
+    ],
+  },
+  {
+    title: "Utilisateurs",
+    items: [
+      { href: "/admin/utilisateurs", label: "Étudiants", icon: Users },
+      { href: "/admin/instructeurs", label: "Instructeurs", icon: GraduationCap },
+      { href: "/admin/administrateurs", label: "Administrateurs", icon: UserCog },
+      { href: "/admin/inscriptions", label: "Inscriptions", icon: ClipboardList },
+    ],
+  },
+  {
+    title: "Contenu",
+    items: [
+      { href: "/admin/content", label: "Actualités", icon: Newspaper },
+      { href: "/admin/pages", label: "Pages", icon: FileText },
+      { href: "/admin/media", label: "Médias", icon: ImageIcon },
+    ],
+  },
+  {
+    title: "Rapports",
+    items: [
+      { href: "/admin/rapports/progression", label: "Progression", icon: BarChart3 },
+      { href: "/admin/certificats", label: "Certificats", icon: Award },
+      { href: "/admin/rapports/revenus", label: "Revenus", icon: Wallet },
+    ],
+  },
+  {
+    title: "",
+    items: [{ href: "/admin/settings", label: "Paramètres", icon: Settings }],
+  },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
-
-  const isActive = (href: string, exact?: boolean) => {
-    if (exact) return pathname === href;
-    return pathname.startsWith(href);
-  };
+  const isActive = (item: Item) =>
+    item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
   return (
-    <aside className="fixed top-0 left-0 h-full w-64 bg-[#0A0F1E] border-r border-white/5 z-40 hidden lg:flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-white/5">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-white" />
+    <aside
+      aria-label="Navigation administration"
+      className="fixed top-0 left-0 h-full w-64 bg-[#0A0F1E] border-r border-white/5 z-40 hidden lg:flex flex-col"
+    >
+      <div className="p-5 border-b border-white/5">
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-9 h-9 rounded-xl bg-white/5 overflow-hidden">
+            <Image
+              src="/logo.png"
+              alt="Cabinet MARC"
+              fill
+              sizes="36px"
+              className="object-contain p-1"
+            />
           </div>
-          <div>
-            <span className="font-bold text-sm text-white">Cabinet <span className="text-primary">MARC</span></span>
-            <p className="text-[10px] text-white/30 leading-none">Administration</p>
+          <div className="leading-tight">
+            <p className="text-[10px] text-white/40 uppercase tracking-widest leading-none mb-0.5">
+              Le Cabinet
+            </p>
+            <span className="text-sm font-bold text-white">
+              MARC <span className="text-primary">· Admin</span>
+            </span>
           </div>
         </Link>
       </div>
 
-      {/* Admin badge */}
-      <div className="px-4 py-3">
-        <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-3 py-2">
-          <Shield className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs text-primary font-semibold">Panneau Admin</span>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon, exact }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
-              isActive(href, exact)
-                ? "bg-primary/15 text-primary border border-primary/20"
-                : "text-white/50 hover:text-white hover:bg-white/5"
+      <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+        {GROUPS.map((group, i) => (
+          <div key={i}>
+            {group.title && (
+              <p className="px-3 mb-2 text-[10px] uppercase tracking-widest text-white/30 font-semibold">
+                {group.title}
+              </p>
             )}
-          >
-            <div className="flex items-center gap-3">
-              <Icon className="w-4 h-4" />
-              {label}
-            </div>
-            <ChevronRight className={cn(
-              "w-3 h-3 transition-opacity",
-              isActive(href, exact) ? "opacity-100" : "opacity-0 group-hover:opacity-50"
-            )} />
-          </Link>
+            <ul className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActive(item);
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                        active
+                          ? "bg-primary/15 text-primary-foreground border border-primary/20"
+                          : "text-white/60 hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         ))}
       </nav>
 
-      {/* Footer */}
       <div className="p-4 border-t border-white/5">
         <Link
           href="/"
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-white/40 hover:text-white hover:bg-white/5 transition-colors"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
         >
           <Home className="w-4 h-4" />
           Voir le site

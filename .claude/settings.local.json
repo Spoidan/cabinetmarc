@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(npm run *)",
+      "Bash(grep -oE \"\\([A-Z][a-z]+\\){1,3}\\\\$\" C:/Projects/cabinet-marc/node_modules/lucide-react/dist/esm/lucide-react.js)"
     ]
   }
 }

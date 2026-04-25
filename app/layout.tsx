@@ -96,7 +96,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      lang={locale}
+      lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full`}
       suppressHydrationWarning
     >

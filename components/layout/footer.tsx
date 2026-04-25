@@ -13,7 +13,7 @@ const footerLinks = {
   quickLinks: [
     { href: "/", label_key: "home" },
     { href: "/about", label_key: "about" },
-    { href: "/courses", label_key: "courses" },
+    { href: "/cours", label_key: "courses" },
     { href: "/services", label_key: "services" },
     { href: "/team", label_key: "team" },
     { href: "/blog", label_key: "blog" },

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,10 +15,10 @@ import { Button } from "@/components/ui/button";
 const navLinks = [
   { href: "/", key: "home" },
   { href: "/about", key: "about" },
-  { href: "/courses", key: "courses" },
   { href: "/services", key: "services" },
+  { href: "/cours", key: "courses" },
+  { href: "/blog", key: "news" },
   { href: "/team", key: "team" },
-  { href: "/blog", key: "blog" },
   { href: "/contact", key: "contact" },
 ] as const;
 
@@ -38,10 +38,14 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  React.useEffect(() => { setIsOpen(false); }, [pathname]);
+  React.useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const closeMobile = () => setIsOpen(false);
 
   return (
     <header
@@ -54,7 +58,6 @@ export function Navbar() {
     >
       <div className="container mx-auto">
         <div className="flex items-center justify-between h-16 lg:h-20">
-
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div className="relative w-10 h-10 shrink-0">
@@ -62,6 +65,7 @@ export function Navbar() {
                 src="/logo.png"
                 alt="Cabinet MARC"
                 fill
+                sizes="40px"
                 className="object-contain"
                 priority
               />
@@ -76,8 +80,11 @@ export function Navbar() {
             </div>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-1">
+          {/* Desktop nav */}
+          <nav
+            aria-label={t("ariaPrimary")}
+            className="hidden lg:flex items-center gap-1"
+          >
             {navLinks.map(({ href, key }) => (
               <Link
                 key={href}
@@ -105,9 +112,10 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             {mounted && (
               <button
+                type="button"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
-                aria-label="Toggle theme"
+                aria-label={t("toggleTheme")}
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
@@ -116,22 +124,33 @@ export function Navbar() {
             {!isSignedIn ? (
               <div className="hidden sm:flex items-center gap-2">
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/sign-in">{t("signin")}</Link>
+                  <Link href="/connexion">{t("login")}</Link>
                 </Button>
                 <Button size="sm" asChild>
-                  <Link href="/sign-up">{t("signup")}</Link>
+                  <Link href="/inscription">{t("register")}</Link>
                 </Button>
               </div>
             ) : (
-              <UserButton
-                appearance={{ elements: { avatarBox: "w-9 h-9 rounded-xl ring-2 ring-primary/20" } }}
-              />
+              <div className="hidden sm:flex items-center gap-2">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/mes-cours">{t("myCourses")}</Link>
+                </Button>
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-9 h-9 rounded-xl ring-2 ring-primary/20",
+                    },
+                  }}
+                />
+              </div>
             )}
 
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
-              aria-label="Toggle menu"
+              aria-label={t("ariaMobile")}
+              aria-expanded={isOpen}
             >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -149,11 +168,15 @@ export function Navbar() {
             transition={{ duration: 0.2 }}
             className="lg:hidden border-t border-border bg-background/95 backdrop-blur-lg overflow-hidden"
           >
-            <div className="container mx-auto py-4 space-y-1">
+            <nav
+              aria-label={t("ariaPrimary")}
+              className="container mx-auto py-4 space-y-1"
+            >
               {navLinks.map(({ href, key }) => (
                 <Link
                   key={href}
                   href={href}
+                  onClick={closeMobile}
                   className={cn(
                     "flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors",
                     isActive(href)
@@ -168,19 +191,25 @@ export function Navbar() {
                 {!isSignedIn ? (
                   <>
                     <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <Link href="/sign-in">{t("signin")}</Link>
+                      <Link href="/connexion" onClick={closeMobile}>
+                        {t("login")}
+                      </Link>
                     </Button>
                     <Button size="sm" className="flex-1" asChild>
-                      <Link href="/sign-up">{t("signup")}</Link>
+                      <Link href="/inscription" onClick={closeMobile}>
+                        {t("register")}
+                      </Link>
                     </Button>
                   </>
                 ) : (
                   <Button variant="ghost" size="sm" className="flex-1" asChild>
-                    <Link href="/dashboard">{t("dashboard")}</Link>
+                    <Link href="/mes-cours" onClick={closeMobile}>
+                      {t("myCourses")}
+                    </Link>
                   </Button>
                 )}
               </div>
-            </div>
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>

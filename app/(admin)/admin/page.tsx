@@ -1,113 +1,174 @@
-import { getSupabaseAdminClient } from "@/lib/supabase";
-import { Users, BookOpen, MessageSquare, Mail, TrendingUp, Eye, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import {
+  Users,
+  BookOpen,
+  GraduationCap,
+  Award,
+  ArrowUpRight,
+  TrendingUp,
+  TrendingDown,
+  ClipboardList,
+} from "lucide-react";
+import { adminDashboardStats } from "@/lib/admin/queries";
+import { formatDateFr } from "@/lib/format";
+import { DashboardCharts } from "@/components/admin/DashboardCharts";
 
-async function getAdminStats() {
-  try {
-    const supabase = getSupabaseAdminClient();
-    const [courses, contacts, subscribers] = await Promise.all([
-      supabase.from("courses").select("id", { count: "exact", head: true }),
-      supabase.from("contact_submissions").select("id", { count: "exact", head: true }),
-      supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).eq("is_active", true),
-    ]);
-    return {
-      courses: courses.count ?? 0,
-      contacts: contacts.count ?? 0,
-      subscribers: subscribers.count ?? 0,
-    };
-  } catch {
-    return { courses: 0, contacts: 0, subscribers: 0 };
-  }
-}
+export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const stats = await getAdminStats();
+  const stats = await adminDashboardStats();
 
   const cards = [
-    { label: "Formations", value: stats.courses, icon: BookOpen, href: "/admin/courses", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/20" },
-    { label: "Messages reçus", value: stats.contacts, icon: MessageSquare, href: "/admin/content", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/20" },
-    { label: "Abonnés newsletter", value: stats.subscribers, icon: Mail, href: "/admin/settings", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/20" },
-    { label: "Visiteurs (30j)", value: "—", icon: Eye, href: "#", color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-950/20" },
-  ];
-
-  const quickActions = [
-    { href: "/admin/courses", label: "Ajouter une formation", icon: BookOpen },
-    { href: "/admin/team", label: "Gérer l'équipe", icon: Users },
-    { href: "/admin/content", label: "Éditer le contenu", icon: TrendingUp },
-    { href: "/admin/settings", label: "Paramètres globaux", icon: TrendingUp },
+    {
+      label: "Total étudiants",
+      value: stats.totals.students.toLocaleString("fr-FR"),
+      delta: stats.totals.students30dDelta,
+      icon: Users,
+      tint: "bg-blue-500/10 text-blue-600",
+    },
+    {
+      label: "Cours publiés",
+      value: stats.totals.published.toLocaleString("fr-FR"),
+      sub: `${stats.totals.drafts} brouillons`,
+      icon: BookOpen,
+      tint: "bg-emerald-500/10 text-emerald-600",
+    },
+    {
+      label: "Inscriptions actives",
+      value: stats.totals.activeEnrollments.toLocaleString("fr-FR"),
+      icon: GraduationCap,
+      tint: "bg-amber-500/10 text-amber-600",
+    },
+    {
+      label: "Certificats (30 j)",
+      value: stats.totals.certificates30d.toLocaleString("fr-FR"),
+      icon: Award,
+      tint: "bg-violet-500/10 text-violet-600",
+    },
   ];
 
   return (
-    <div className="max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Tableau de bord</h1>
-        <p className="text-muted-foreground mt-1">Vue d&apos;ensemble de Cabinet MARC</p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {cards.map(({ label, value, icon: Icon, href, color, bg }) => (
-          <Link key={label} href={href}>
-            <div className="bg-card rounded-2xl border border-border p-5 hover:shadow-md transition-shadow group">
-              <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-3`}>
-                <Icon className={`w-5 h-5 ${color}`} />
-              </div>
-              <div className="text-2xl font-bold mb-0.5">{value}</div>
-              <div className="text-xs text-muted-foreground flex items-center justify-between">
-                {label}
-                <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="font-bold mb-4">Actions rapides</h2>
-          <div className="space-y-2">
-            {quickActions.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted transition-colors text-sm"
-              >
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-primary" />
-                </div>
-                {label}
-                <ArrowUpRight className="w-3 h-3 ml-auto text-muted-foreground" />
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-card rounded-2xl border border-border p-6">
-          <h2 className="font-bold mb-4">Dernières soumissions de contact</h2>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Les soumissions s&apos;afficheront ici une fois Supabase connecté.
-            </p>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/content">Voir tous les messages</Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Info banner */}
-      <div className="rounded-2xl bg-gradient-to-br from-[#0A0F1E] to-[#0f1f3d] p-6">
-        <h3 className="font-bold text-white mb-2">🚀 Configuration requise</h3>
-        <p className="text-white/60 text-sm mb-4">
-          Connectez Supabase et Clerk pour activer toutes les fonctionnalités d&apos;administration.
-          Consultez le README pour les instructions détaillées.
+    <div className="space-y-8">
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight">Vue d&apos;ensemble</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          État du catalogue, des inscriptions et des certificats.
         </p>
-        <Button variant="outline-white" size="sm" asChild>
-          <Link href="/admin/settings">Paramètres globaux</Link>
-        </Button>
-      </div>
+      </header>
+
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map((c) => {
+          const Icon = c.icon;
+          return (
+            <article key={c.label} className="rounded-2xl border border-border bg-card p-5">
+              <div className={`w-9 h-9 rounded-xl ${c.tint} flex items-center justify-center mb-3`}>
+                <Icon className="w-4 h-4" />
+              </div>
+              <p className="text-2xl font-bold mb-1">{c.value}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                {c.label}
+                {typeof c.delta === "number" && (
+                  <span
+                    className={`ml-2 inline-flex items-center gap-0.5 ${
+                      c.delta >= 0 ? "text-emerald-600" : "text-destructive"
+                    }`}
+                  >
+                    {c.delta >= 0 ? (
+                      <TrendingUp className="w-3 h-3" />
+                    ) : (
+                      <TrendingDown className="w-3 h-3" />
+                    )}
+                    {c.delta >= 0 ? "+" : ""}
+                    {c.delta}% vs 30 j
+                  </span>
+                )}
+                {c.sub && <span className="ml-2">{c.sub}</span>}
+              </p>
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="grid lg:grid-cols-[2fr_1fr] gap-5">
+        <DashboardCharts series={stats.series} top={stats.topCoursesSeries} />
+      </section>
+
+      <section className="grid lg:grid-cols-2 gap-5">
+        <article className="rounded-2xl border border-border bg-card p-5">
+          <header className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Inscriptions récentes</h2>
+            <Link
+              href="/admin/inscriptions"
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              Voir tout <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </header>
+          {stats.recent.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Aucune inscription récente.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {stats.recent.map((row) => (
+                <li key={row.id} className="py-3 flex items-center gap-3 text-sm">
+                  <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold">
+                    {(row.user.full_name ?? row.user.email ?? "?").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">
+                      {row.user.full_name ?? row.user.email ?? row.user.id.slice(0, 6)}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      s&apos;est inscrit à {row.course?.title ?? "—"}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatDateFr(row.enrolled_at, "d MMM")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+
+        <article className="rounded-2xl border border-border bg-card p-5">
+          <header className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Cours à surveiller</h2>
+            <Link
+              href="/admin/cours"
+              className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              Voir tout <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </header>
+          {stats.attention.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Tous les cours sont à jour.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {stats.attention.map((row) => (
+                <li key={row.id} className="py-3 flex items-center gap-3 text-sm">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <ClipboardList className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{row.title}</p>
+                    <p className="text-xs text-muted-foreground">{row.reason}</p>
+                  </div>
+                  <Link
+                    href={`/admin/cours/${row.id}/editer`}
+                    className="text-xs text-primary hover:underline shrink-0"
+                  >
+                    Ouvrir
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+      </section>
     </div>
   );
 }
