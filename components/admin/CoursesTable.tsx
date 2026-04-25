@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   Edit,
   Eye,
   Trash2,
@@ -13,13 +15,34 @@ import {
   ToggleRight,
   Search,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
+  type RowSelectionState,
+  type Column,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { toggleCoursePublished, deleteCourse } from "@/app/(admin)/admin/actions";
+import {
+  toggleCoursePublished,
+  deleteCourse,
+  bulkUpdateCourses,
+} from "@/app/(admin)/admin/actions";
 import { formatBIF, formatDateFr } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type CourseRow = {
   id: string;
@@ -53,63 +76,43 @@ export function CoursesTable({
   categories: Cat[];
 }) {
   const router = useRouter();
-  const [search, setSearch] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<"all" | "published" | "draft">("all");
-  const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
-  const [sortBy, setSortBy] = React.useState<"updated" | "title" | "enrollments">("updated");
-  const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc");
+
+  const [globalSearch, setGlobalSearch] = React.useState("");
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "updated_at", desc: true },
+  ]);
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+
   const [pendingId, setPendingId] = React.useState<string | null>(null);
-  const [confirm, setConfirm] = React.useState<{ id: string; title: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = React.useState<{ id: string; title: string } | null>(null);
+  const [bulkConfirm, setBulkConfirm] = React.useState<
+    { op: "publish" | "unpublish" | "delete"; ids: string[]; titles: string[] } | null
+  >(null);
+  const [bulkPending, setBulkPending] = React.useState(false);
 
-  const onSort = (field: typeof sortBy) => {
-    if (sortBy === field) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(field);
-      setSortDir("desc");
-    }
-  };
+  const togglePublish = React.useCallback(
+    async (course: CourseRow) => {
+      setPendingId(course.id);
+      const target = !course.is_published;
+      const res = await toggleCoursePublished(course.id, target);
+      setPendingId(null);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(target ? "Cours publié." : "Cours dépublié.");
+      router.refresh();
+    },
+    [router]
+  );
 
-  const filtered = React.useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return courses
-      .filter((c) => {
-        if (statusFilter === "published" && !c.is_published) return false;
-        if (statusFilter === "draft" && c.is_published) return false;
-        if (categoryFilter !== "all" && c.category_id !== categoryFilter) return false;
-        if (q && !`${c.title} ${c.category_name ?? ""}`.toLowerCase().includes(q)) return false;
-        return true;
-      })
-      .sort((a, b) => {
-        const dir = sortDir === "asc" ? 1 : -1;
-        if (sortBy === "title") return a.title.localeCompare(b.title) * dir;
-        if (sortBy === "enrollments")
-          return (a.enrollments_count - b.enrollments_count) * dir;
-        return (
-          (new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()) * dir
-        );
-      });
-  }, [courses, search, statusFilter, categoryFilter, sortBy, sortDir]);
-
-  const togglePublish = async (course: CourseRow) => {
-    setPendingId(course.id);
-    const target = !course.is_published;
-    const res = await toggleCoursePublished(course.id, target);
+  const onDeleteSingle = async () => {
+    if (!confirmDelete) return;
+    setPendingId(confirmDelete.id);
+    const res = await deleteCourse(confirmDelete.id);
     setPendingId(null);
-    if (!res.ok) {
-      toast.error(res.error);
-      return;
-    }
-    toast.success(target ? "Cours publié." : "Cours dépublié.");
-    router.refresh();
-  };
-
-  const onDelete = async () => {
-    if (!confirm) return;
-    setPendingId(confirm.id);
-    const res = await deleteCourse(confirm.id);
-    setPendingId(null);
-    setConfirm(null);
+    setConfirmDelete(null);
     if (!res.ok) {
       toast.error(res.error);
       return;
@@ -117,6 +120,198 @@ export function CoursesTable({
     toast.success("Cours supprimé.");
     router.refresh();
   };
+
+  const performBulk = async () => {
+    if (!bulkConfirm) return;
+    setBulkPending(true);
+    const res = await bulkUpdateCourses(bulkConfirm.ids, bulkConfirm.op);
+    setBulkPending(false);
+    setBulkConfirm(null);
+    setRowSelection({});
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    const labels: Record<typeof bulkConfirm.op, string> = {
+      publish: "Cours publiés",
+      unpublish: "Cours dépubliés",
+      delete: "Cours supprimés",
+    };
+    toast.success(`${labels[bulkConfirm.op]} : ${res.affected ?? bulkConfirm.ids.length}`);
+    router.refresh();
+  };
+
+  const columns = React.useMemo<ColumnDef<CourseRow>[]>(
+    () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            aria-label="Tout sélectionner"
+            checked={
+              table.getIsAllPageRowsSelected()
+                ? true
+                : table.getIsSomePageRowsSelected()
+                  ? "indeterminate"
+                  : false
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(Boolean(value))}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label="Sélectionner ce cours"
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
+          />
+        ),
+        enableSorting: false,
+      },
+      {
+        accessorKey: "title",
+        header: ({ column }) => <SortHeader column={column}>Titre</SortHeader>,
+        cell: ({ row }) => (
+          <div>
+            <p className="font-medium">{row.original.title}</p>
+            <p className="text-xs text-muted-foreground">/{row.original.slug}</p>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "category_id",
+        header: "Catégorie",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">{row.original.category_name ?? "—"}</span>
+        ),
+        filterFn: (row, _id, value) => {
+          if (!value || value === "all") return true;
+          return row.original.category_id === value;
+        },
+      },
+      {
+        accessorKey: "level",
+        header: "Niveau",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {LEVELS[row.original.level] ?? row.original.level}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "price_bif",
+        header: ({ column }) => <SortHeader column={column}>Prix</SortHeader>,
+        cell: ({ row }) =>
+          row.original.price_bif === 0 ? (
+            <Badge variant="emerald">Gratuit</Badge>
+          ) : (
+            <span className="font-medium">{formatBIF(row.original.price_bif)}</span>
+          ),
+      },
+      {
+        accessorKey: "is_published",
+        header: "Statut",
+        cell: ({ row }) => (
+          <Badge variant={row.original.is_published ? "emerald" : "outline"}>
+            {row.original.is_published ? "Publié" : "Brouillon"}
+          </Badge>
+        ),
+        filterFn: (row, _id, value) => {
+          if (!value || value === "all") return true;
+          if (value === "published") return row.original.is_published;
+          if (value === "draft") return !row.original.is_published;
+          return true;
+        },
+      },
+      {
+        accessorKey: "enrollments_count",
+        header: ({ column }) => <SortHeader column={column}>Inscriptions</SortHeader>,
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">{row.original.enrollments_count}</span>
+        ),
+      },
+      {
+        accessorKey: "updated_at",
+        header: ({ column }) => <SortHeader column={column}>Mise à jour</SortHeader>,
+        cell: ({ row }) => (
+          <span className="text-muted-foreground text-xs">
+            {formatDateFr(row.original.updated_at, "d MMM yyyy")}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">Actions</span>,
+        enableSorting: false,
+        cell: ({ row }) => {
+          const c = row.original;
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <IconBtn
+                title={c.is_published ? "Dépublier" : "Publier"}
+                onClick={() => togglePublish(c)}
+                loading={pendingId === c.id}
+              >
+                {c.is_published ? (
+                  <ToggleRight className="w-4 h-4 text-emerald-500" />
+                ) : (
+                  <ToggleLeft className="w-4 h-4" />
+                )}
+              </IconBtn>
+              <Link
+                href={`/cours/${c.slug}`}
+                target="_blank"
+                title="Aperçu"
+                aria-label="Aperçu côté étudiant"
+                className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <Eye className="w-4 h-4" />
+              </Link>
+              <Link
+                href={`/admin/cours/${c.id}/editer`}
+                title="Éditer"
+                aria-label="Ouvrir l'éditeur"
+                className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <Edit className="w-4 h-4" />
+              </Link>
+              <IconBtn
+                title="Supprimer"
+                onClick={() => setConfirmDelete({ id: c.id, title: c.title })}
+              >
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </IconBtn>
+            </div>
+          );
+        },
+      },
+    ],
+    [pendingId, togglePublish]
+  );
+
+  const table = useReactTable({
+    data: courses,
+    columns,
+    state: { sorting, columnFilters, rowSelection, globalFilter: globalSearch },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalSearch,
+    getRowId: (row) => row.id,
+    globalFilterFn: (row, _columnId, filterValue) => {
+      if (!filterValue) return true;
+      const q = String(filterValue).toLowerCase();
+      const r = row.original;
+      return `${r.title} ${r.slug} ${r.category_name ?? ""}`.toLowerCase().includes(q);
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 25 } },
+  });
+
+  const selectedRows = table.getSelectedRowModel().flatRows;
+  const selectedCount = selectedRows.length;
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
@@ -126,14 +321,14 @@ export function CoursesTable({
           <Input
             placeholder="Rechercher un cours..."
             className="pl-9 h-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
           />
         </div>
         <select
-          value={statusFilter}
+          value={(table.getColumn("is_published")?.getFilterValue() as string) ?? "all"}
           onChange={(e) =>
-            setStatusFilter(e.target.value as typeof statusFilter)
+            table.getColumn("is_published")?.setFilterValue(e.target.value === "all" ? undefined : e.target.value)
           }
           className="h-9 px-3 rounded-lg border border-input bg-background text-sm"
           aria-label="Filtrer par statut"
@@ -143,8 +338,10 @@ export function CoursesTable({
           <option value="draft">Brouillon</option>
         </select>
         <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
+          value={(table.getColumn("category_id")?.getFilterValue() as string) ?? "all"}
+          onChange={(e) =>
+            table.getColumn("category_id")?.setFilterValue(e.target.value === "all" ? undefined : e.target.value)
+          }
           className="h-9 px-3 rounded-lg border border-input bg-background text-sm"
           aria-label="Filtrer par catégorie"
         >
@@ -157,92 +354,105 @@ export function CoursesTable({
         </select>
       </div>
 
+      {selectedCount > 0 && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 border-b border-border bg-primary/5">
+          <p className="text-sm font-medium">
+            {selectedCount} cours sélectionné{selectedCount > 1 ? "s" : ""}
+          </p>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                setBulkConfirm({
+                  op: "publish",
+                  ids: selectedRows.map((r) => r.original.id),
+                  titles: selectedRows.map((r) => r.original.title),
+                })
+              }
+            >
+              <ToggleRight className="w-4 h-4" />
+              Publier
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                setBulkConfirm({
+                  op: "unpublish",
+                  ids: selectedRows.map((r) => r.original.id),
+                  titles: selectedRows.map((r) => r.original.title),
+                })
+              }
+            >
+              <ToggleLeft className="w-4 h-4" />
+              Dépublier
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() =>
+                setBulkConfirm({
+                  op: "delete",
+                  ids: selectedRows.map((r) => r.original.id),
+                  titles: selectedRows.map((r) => r.original.title),
+                })
+              }
+            >
+              <Trash2 className="w-4 h-4" />
+              Supprimer
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>
+              Annuler
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <Th label="Titre" onSort={() => onSort("title")} active={sortBy === "title"} dir={sortDir} />
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Catégorie</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Niveau</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Prix</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Statut</th>
-              <Th label="Inscriptions" onSort={() => onSort("enrollments")} active={sortBy === "enrollments"} dir={sortDir} />
-              <Th label="Mise à jour" onSort={() => onSort("updated")} active={sortBy === "updated"} dir={sortDir} />
-              <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground">Actions</th>
-            </tr>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="border-b border-border bg-muted/30">
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className={cn(
+                      "text-left px-4 py-3 text-xs font-semibold text-muted-foreground",
+                      header.column.id === "actions" && "text-right"
+                    )}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                ))}
+              </tr>
+            ))}
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-muted-foreground">
+                <td colSpan={columns.length} className="text-center py-12 text-muted-foreground">
                   {courses.length === 0
                     ? "Aucun cours pour le moment."
                     : "Aucun cours ne correspond à vos filtres."}
                 </td>
               </tr>
             ) : (
-              filtered.map((c) => (
-                <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20">
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{c.title}</p>
-                    <p className="text-xs text-muted-foreground">/{c.slug}</p>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.category_name ?? "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{LEVELS[c.level] ?? c.level}</td>
-                  <td className="px-4 py-3">
-                    {c.price_bif === 0 ? (
-                      <Badge variant="emerald">Gratuit</Badge>
-                    ) : (
-                      <span className="font-medium">{formatBIF(c.price_bif)}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={c.is_published ? "emerald" : "outline"}>
-                      {c.is_published ? "Publié" : "Brouillon"}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.enrollments_count}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">
-                    {formatDateFr(c.updated_at, "d MMM yyyy")}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <IconBtn
-                        title={c.is_published ? "Dépublier" : "Publier"}
-                        onClick={() => togglePublish(c)}
-                        loading={pendingId === c.id}
-                      >
-                        {c.is_published ? (
-                          <ToggleRight className="w-4 h-4 text-emerald-500" />
-                        ) : (
-                          <ToggleLeft className="w-4 h-4" />
-                        )}
-                      </IconBtn>
-                      <Link
-                        href={`/cours/${c.slug}`}
-                        target="_blank"
-                        className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"
-                        aria-label="Aperçu"
-                        title="Aperçu"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                      <Link
-                        href={`/admin/cours/${c.id}/editer`}
-                        className="w-8 h-8 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"
-                        aria-label="Éditer"
-                        title="Éditer"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Link>
-                      <IconBtn
-                        title="Supprimer"
-                        onClick={() => setConfirm({ id: c.id, title: c.title })}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </IconBtn>
-                    </div>
-                  </td>
+              table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className={cn(
+                    "border-b border-border last:border-0 hover:bg-muted/20",
+                    row.getIsSelected() && "bg-primary/5"
+                  )}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-4 py-3">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
                 </tr>
               ))
             )}
@@ -250,46 +460,104 @@ export function CoursesTable({
         </table>
       </div>
 
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border text-sm">
+        <p className="text-xs text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} cours · {selectedCount} sélectionné
+          {selectedCount !== 1 ? "s" : ""}
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Précédent
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Suivant
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
       <ConfirmDialog
-        open={Boolean(confirm)}
-        onOpenChange={(open) => !open && setConfirm(null)}
+        open={Boolean(confirmDelete)}
+        onOpenChange={(open) => !open && setConfirmDelete(null)}
         title="Supprimer ce cours ?"
         description={
-          confirm
-            ? `Cette action supprimera définitivement « ${confirm.title} ». Les leçons, quiz et inscriptions associés seront également supprimés.`
+          confirmDelete
+            ? `Cette action supprimera définitivement « ${confirmDelete.title} ». Les leçons, quiz et inscriptions associés seront également supprimés.`
             : ""
         }
         confirmLabel="Supprimer"
         destructive
-        onConfirm={onDelete}
+        onConfirm={onDeleteSingle}
+      />
+
+      <ConfirmDialog
+        open={Boolean(bulkConfirm)}
+        onOpenChange={(open) => !open && !bulkPending && setBulkConfirm(null)}
+        title={
+          bulkConfirm?.op === "delete"
+            ? `Supprimer ${bulkConfirm.ids.length} cours ?`
+            : bulkConfirm?.op === "publish"
+              ? `Publier ${bulkConfirm.ids.length} cours ?`
+              : `Dépublier ${bulkConfirm?.ids.length ?? 0} cours ?`
+        }
+        description={
+          bulkConfirm
+            ? bulkConfirm.op === "delete"
+              ? `${bulkConfirm.ids.length} cours seront supprimés définitivement avec leurs leçons, quiz et inscriptions. Cours concernés : ${bulkConfirm.titles.slice(0, 3).join(" · ")}${bulkConfirm.titles.length > 3 ? ` et ${bulkConfirm.titles.length - 3} autres` : ""}.`
+              : `Cours concernés : ${bulkConfirm.titles.slice(0, 3).join(" · ")}${bulkConfirm.titles.length > 3 ? ` et ${bulkConfirm.titles.length - 3} autres` : ""}.`
+            : ""
+        }
+        confirmLabel={
+          bulkConfirm?.op === "delete"
+            ? "Supprimer"
+            : bulkConfirm?.op === "publish"
+              ? "Publier"
+              : "Dépublier"
+        }
+        destructive={bulkConfirm?.op === "delete"}
+        onConfirm={performBulk}
       />
     </div>
   );
 }
 
-function Th({
-  label,
-  onSort,
-  active,
-  dir,
+function SortHeader({
+  column,
+  children,
 }: {
-  label: string;
-  onSort: () => void;
-  active: boolean;
-  dir: "asc" | "desc";
+  column: Column<CourseRow, unknown>;
+  children: React.ReactNode;
 }) {
+  const sort = column.getIsSorted();
   return (
-    <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">
-      <button
-        type="button"
-        onClick={onSort}
-        className={`inline-flex items-center gap-1 ${active ? "text-foreground" : ""}`}
-      >
-        {label}
-        <ArrowUpDown className={`w-3 h-3 ${active ? "" : "opacity-40"}`} />
-        {active && <span className="sr-only">{dir === "asc" ? "Croissant" : "Décroissant"}</span>}
-      </button>
-    </th>
+    <button
+      type="button"
+      onClick={column.getToggleSortingHandler()}
+      className="inline-flex items-center gap-1 text-left"
+    >
+      {children}
+      {sort === "asc" ? (
+        <ArrowUp className="w-3 h-3" />
+      ) : sort === "desc" ? (
+        <ArrowDown className="w-3 h-3" />
+      ) : (
+        <ArrowUpDown className="w-3 h-3 opacity-40" />
+      )}
+    </button>
   );
 }
 

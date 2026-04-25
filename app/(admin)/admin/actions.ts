@@ -105,5 +105,40 @@ export async function setUserRole(userId: string, role: "student" | "instructor"
   const { error } = await admin.from("profiles").update({ role }).eq("id", userId);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/utilisateurs");
+  revalidatePath("/admin/instructeurs");
+  revalidatePath("/admin/administrateurs");
   return { ok: true };
+}
+
+export async function bulkUpdateCourses(
+  ids: string[],
+  op: "publish" | "unpublish" | "delete"
+): Promise<Result & { affected?: number }> {
+  await requireAdmin();
+  if (ids.length === 0) return { ok: false, error: "Aucun cours sélectionné." };
+  const admin = createSupabaseAdminClient();
+
+  if (op === "delete") {
+    const { error, count } = await admin.from("courses").delete({ count: "exact" }).in("id", ids);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/admin/cours");
+    revalidatePath("/cours");
+    return { ok: true, affected: count ?? ids.length };
+  }
+
+  const publish = op === "publish";
+  const { error, count } = await admin
+    .from("courses")
+    .update(
+      {
+        is_published: publish,
+        published_at: publish ? new Date().toISOString() : null,
+      },
+      { count: "exact" }
+    )
+    .in("id", ids);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/cours");
+  revalidatePath("/cours");
+  return { ok: true, affected: count ?? ids.length };
 }

@@ -62,6 +62,19 @@ export async function reorderModules(courseId: string, orderedIds: string[]): Pr
   return { ok: true };
 }
 
+export async function reorderLessons(
+  moduleId: string,
+  orderedIds: string[]
+): Promise<Result> {
+  await requireAdmin();
+  const admin = createSupabaseAdminClient();
+  for (let i = 0; i < orderedIds.length; i++) {
+    await admin.from("course_lessons").update({ sort_order: i }).eq("id", orderedIds[i]);
+  }
+  // The caller knows which course this module belongs to and will revalidate.
+  return { ok: true };
+}
+
 // ----- lessons
 type LessonPatch = Partial<{
   title: string;

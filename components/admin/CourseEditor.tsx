@@ -9,13 +9,29 @@ import {
   Eye,
   Plus,
   Trash2,
-  ArrowUp,
-  ArrowDown,
   CheckCircle2,
   CircleDot,
   Settings,
   Loader2,
+  GripVertical,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +50,7 @@ import {
   updateModule,
   deleteModule,
   reorderModules,
+  reorderLessons,
   createLesson,
   updateLesson,
   deleteLesson,
@@ -94,20 +111,42 @@ export function CourseEditor({ outline, categories }: Props) {
     refresh();
   };
 
-  const moveModule = async (id: string, dir: -1 | 1) => {
+  const handleModuleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
     const ids = modules.map((m) => m.id);
-    const idx = ids.indexOf(id);
-    const newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= ids.length) return;
-    const next = [...ids];
-    const [m] = next.splice(idx, 1);
-    next.splice(newIdx, 0, m);
+    const oldIdx = ids.indexOf(String(active.id));
+    const newIdx = ids.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(ids, oldIdx, newIdx);
     onSaveStart();
     const res = await reorderModules(course.id, next);
     if (!res.ok) toast.error(res.error);
     announceSaved();
     refresh();
   };
+
+  const handleLessonDragEnd = async (moduleId: string, event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const mod = modules.find((m) => m.id === moduleId);
+    if (!mod) return;
+    const ids = mod.lessons.map((l) => l.id);
+    const oldIdx = ids.indexOf(String(active.id));
+    const newIdx = ids.indexOf(String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const next = arrayMove(ids, oldIdx, newIdx);
+    onSaveStart();
+    const res = await reorderLessons(moduleId, next);
+    if (!res.ok) toast.error(res.error);
+    announceSaved();
+    refresh();
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const addLesson = async (moduleId: string) => {
     onSaveStart();
@@ -183,105 +222,127 @@ export function CourseEditor({ outline, categories }: Props) {
           <Settings className="w-4 h-4 shrink-0" />
           <span className="truncate">{course.title || "Métadonnées du cours"}</span>
         </button>
-        <div className="mt-4 space-y-3">
-          {modules.map((mod, idx) => (
-            <div key={mod.id} className="rounded-lg border border-border">
-              <div className="flex items-center px-2 py-1.5 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setSelection({ kind: "module", id: mod.id })}
-                  className={cn(
-                    "flex-1 text-left text-sm font-medium px-2 py-1 rounded",
-                    selection.kind === "module" && selection.id === mod.id
-                      ? "text-primary"
-                      : "hover:text-foreground"
-                  )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleModuleDragEnd}
+        >
+          <SortableContext
+            items={modules.map((m) => m.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="mt-4 space-y-3">
+              {modules.map((mod, idx) => (
+                <SortableModule
+                  key={mod.id}
+                  id={mod.id}
                 >
-                  {idx + 1}. {mod.title}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveModule(mod.id, -1)}
-                  className="w-6 h-6 rounded hover:bg-muted flex items-center justify-center text-muted-foreground"
-                  title="Monter"
-                >
-                  <ArrowUp className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => moveModule(mod.id, 1)}
-                  className="w-6 h-6 rounded hover:bg-muted flex items-center justify-center text-muted-foreground"
-                  title="Descendre"
-                >
-                  <ArrowDown className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete({ kind: "module", id: mod.id, title: mod.title })}
-                  className="w-6 h-6 rounded hover:bg-destructive/10 text-destructive/80 flex items-center justify-center"
-                  title="Supprimer le module"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <ul className="px-2 pb-2 space-y-0.5">
-                {mod.lessons.map((lesson) => (
-                  <li key={lesson.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelection({ kind: "lesson", id: lesson.id })}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs",
-                        selection.kind === "lesson" && selection.id === lesson.id
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <CircleDot className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{lesson.title}</span>
-                    </button>
-                  </li>
-                ))}
-                {mod.quizzes.map((quiz) => (
-                  <li key={quiz.id}>
-                    <button
-                      type="button"
-                      onClick={() => setSelection({ kind: "quiz", id: quiz.id })}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs",
-                        selection.kind === "quiz" && selection.id === quiz.id
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <CheckCircle2 className="w-3 h-3 shrink-0 text-amber-500" />
-                      <span className="truncate">Quiz — {quiz.title}</span>
-                    </button>
-                  </li>
-                ))}
-                <li className="grid grid-cols-2 gap-1 mt-1.5">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => addLesson(mod.id)}
-                    className="h-7 text-xs"
-                  >
-                    <Plus className="w-3 h-3" /> Leçon
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => addQuiz(mod.id)}
-                    className="h-7 text-xs"
-                  >
-                    <Plus className="w-3 h-3" /> Quiz
-                  </Button>
-                </li>
-              </ul>
+                  <div className="rounded-lg border border-border bg-card">
+                    <div className="flex items-center px-2 py-1.5 gap-1">
+                      <SortableHandle title="Glisser pour réordonner le module" />
+                      <button
+                        type="button"
+                        onClick={() => setSelection({ kind: "module", id: mod.id })}
+                        className={cn(
+                          "flex-1 text-left text-sm font-medium px-2 py-1 rounded truncate",
+                          selection.kind === "module" && selection.id === mod.id
+                            ? "text-primary"
+                            : "hover:text-foreground"
+                        )}
+                      >
+                        {idx + 1}. {mod.title}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete({ kind: "module", id: mod.id, title: mod.title })}
+                        className="w-6 h-6 rounded hover:bg-destructive/10 text-destructive/80 flex items-center justify-center"
+                        title="Supprimer le module"
+                        aria-label="Supprimer le module"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <ul className="px-2 pb-2 space-y-0.5">
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={(e) => handleLessonDragEnd(mod.id, e)}
+                      >
+                        <SortableContext
+                          items={mod.lessons.map((l) => l.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {mod.lessons.map((lesson) => (
+                            <SortableLessonRow
+                              key={lesson.id}
+                              id={lesson.id}
+                            >
+                              <div
+                                className={cn(
+                                  "flex items-center gap-1.5 rounded text-xs",
+                                  selection.kind === "lesson" && selection.id === lesson.id
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                              >
+                                <SortableHandle compact title="Glisser pour réordonner la leçon" />
+                                <button
+                                  type="button"
+                                  onClick={() => setSelection({ kind: "lesson", id: lesson.id })}
+                                  className="flex-1 flex items-center gap-2 px-1 py-1.5 text-left"
+                                >
+                                  <CircleDot className="w-3 h-3 shrink-0" />
+                                  <span className="truncate">{lesson.title}</span>
+                                </button>
+                              </div>
+                            </SortableLessonRow>
+                          ))}
+                        </SortableContext>
+                      </DndContext>
+                      {mod.quizzes.map((quiz) => (
+                        <li key={quiz.id}>
+                          <button
+                            type="button"
+                            onClick={() => setSelection({ kind: "quiz", id: quiz.id })}
+                            className={cn(
+                              "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs",
+                              selection.kind === "quiz" && selection.id === quiz.id
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            )}
+                          >
+                            <CheckCircle2 className="w-3 h-3 shrink-0 text-amber-500" />
+                            <span className="truncate">Quiz — {quiz.title}</span>
+                          </button>
+                        </li>
+                      ))}
+                      <li className="grid grid-cols-2 gap-1 mt-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addLesson(mod.id)}
+                          className="h-7 text-xs"
+                        >
+                          <Plus className="w-3 h-3" /> Leçon
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addQuiz(mod.id)}
+                          className="h-7 text-xs"
+                        >
+                          <Plus className="w-3 h-3" /> Quiz
+                        </Button>
+                      </li>
+                    </ul>
+                  </div>
+                </SortableModule>
+              ))}
             </div>
-          ))}
+          </SortableContext>
+        </DndContext>
 
-          {finalQuizzes.length > 0 && (
+        {finalQuizzes.length > 0 && (
             <div className="rounded-lg border border-border p-2 space-y-0.5">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-2 pb-1">
                 Examen final
@@ -305,13 +366,12 @@ export function CourseEditor({ outline, categories }: Props) {
             </div>
           )}
 
-          <Button variant="outline" className="w-full" onClick={addModule}>
-            <Plus className="w-4 h-4" /> Module
-          </Button>
-          <Button variant="ghost" className="w-full" onClick={() => addQuiz(null)}>
-            <Plus className="w-4 h-4" /> Quiz final
-          </Button>
-        </div>
+        <Button variant="outline" className="w-full" onClick={addModule}>
+          <Plus className="w-4 h-4" /> Module
+        </Button>
+        <Button variant="ghost" className="w-full" onClick={() => addQuiz(null)}>
+          <Plus className="w-4 h-4" /> Quiz final
+        </Button>
       </aside>
 
       <div className="flex flex-col">
@@ -429,6 +489,70 @@ export function CourseEditor({ outline, categories }: Props) {
         onConfirm={performDelete}
       />
     </div>
+  );
+}
+
+// --------- Sortable components (dnd-kit wrappers)
+function SortableModule({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children}
+    </div>
+  );
+}
+
+function SortableLessonRow({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+  return (
+    <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </li>
+  );
+}
+
+function SortableHandle({
+  title,
+  compact = false,
+}: {
+  title: string;
+  compact?: boolean;
+}) {
+  const { listeners, attributes } = useSortable({ id: "" });
+  return (
+    <button
+      type="button"
+      {...listeners}
+      {...attributes}
+      title={title}
+      aria-label={title}
+      className={cn(
+        "shrink-0 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing",
+        compact ? "w-4 h-4" : "w-5 h-5"
+      )}
+    >
+      <GripVertical className={compact ? "w-4 h-4" : "w-5 h-5"} />
+    </button>
   );
 }
 
