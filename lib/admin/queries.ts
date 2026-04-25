@@ -234,13 +234,26 @@ export async function adminListCategories(): Promise<CategoryWithCounts[]> {
   }));
 }
 
-export async function adminListStudents(limit = 100) {
+export type ProfileWithCount = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: string;
+  avatar_url: string | null;
+  created_at: string;
+  enrollments_count: number;
+};
+
+export async function adminListProfilesByRole(
+  role: "student" | "instructor" | "admin",
+  limit = 200
+): Promise<ProfileWithCount[]> {
   const admin = createSupabaseAdminClient();
   const [{ data: profiles }, { data: enrollments }] = await Promise.all([
     admin
       .from("profiles")
       .select("id, full_name, email, role, avatar_url, created_at")
-      .eq("role", "student")
+      .eq("role", role)
       .order("created_at", { ascending: false })
       .limit(limit),
     admin.from("course_enrollments").select("user_id"),
@@ -249,17 +262,203 @@ export async function adminListStudents(limit = 100) {
   for (const row of enrollments ?? []) {
     counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
   }
-  return ((profiles ?? []) as Array<{
-    id: string;
-    full_name: string | null;
-    email: string | null;
-    role: string;
-    avatar_url: string | null;
-    created_at: string;
-  }>).map((p) => ({
+  return ((profiles ?? []) as Omit<ProfileWithCount, "enrollments_count">[]).map((p) => ({
     ...p,
     enrollments_count: counts.get(p.id) ?? 0,
   }));
+}
+
+/** @deprecated use adminListProfilesByRole("student") */
+export async function adminListStudents(limit = 200) {
+  return adminListProfilesByRole("student", limit);
+}
+
+export type LessonRowAdmin = {
+  id: string;
+  title: string;
+  slug: string;
+  duration_minutes: number | null;
+  is_free_preview: boolean;
+  sort_order: number;
+  module_id: string;
+  module_title: string;
+  course_id: string;
+  course_title: string;
+  course_slug: string;
+  course_published: boolean;
+};
+
+export async function adminListLessons(): Promise<LessonRowAdmin[]> {
+  const admin = createSupabaseAdminClient();
+  const [{ data: lessons }, { data: modules }, { data: courses }] = await Promise.all([
+    admin
+      .from("course_lessons")
+      .select("id, module_id, title, slug, duration_minutes, is_free_preview, sort_order")
+      .order("sort_order", { ascending: true }),
+    admin.from("course_modules").select("id, course_id, title, sort_order"),
+    admin.from("courses").select("id, title, slug, is_published"),
+  ]);
+  const moduleById = new Map(
+    ((modules ?? []) as Array<{ id: string; course_id: string; title: string; sort_order: number }>).map((m) => [m.id, m])
+  );
+  const courseById = new Map(
+    ((courses ?? []) as Array<{ id: string; title: string; slug: string; is_published: boolean }>).map((c) => [c.id, c])
+  );
+  return ((lessons ?? []) as Array<{
+    id: string;
+    module_id: string;
+    title: string;
+    slug: string;
+    duration_minutes: number | null;
+    is_free_preview: boolean;
+    sort_order: number;
+  }>).map((l) => {
+    const mod = moduleById.get(l.module_id);
+    const course = mod ? courseById.get(mod.course_id) : null;
+    return {
+      id: l.id,
+      title: l.title,
+      slug: l.slug,
+      duration_minutes: l.duration_minutes,
+      is_free_preview: l.is_free_preview,
+      sort_order: l.sort_order,
+      module_id: l.module_id,
+      module_title: mod?.title ?? "—",
+      course_id: course?.id ?? "",
+      course_title: course?.title ?? "—",
+      course_slug: course?.slug ?? "",
+      course_published: course?.is_published ?? false,
+    };
+  });
+}
+
+export type QuizRowAdmin = {
+  id: string;
+  title: string;
+  pass_score_percent: number;
+  module_id: string | null;
+  module_title: string | null;
+  course_id: string;
+  course_title: string;
+  course_slug: string;
+  question_count: number;
+  attempt_count: number;
+};
+
+export async function adminListQuizzes(): Promise<QuizRowAdmin[]> {
+  const admin = createSupabaseAdminClient();
+  const [{ data: quizzes }, { data: modules }, { data: courses }, { data: questions }, { data: attempts }] =
+    await Promise.all([
+      admin
+        .from("course_quizzes")
+        .select("id, course_id, module_id, title, pass_score_percent, sort_order")
+        .order("sort_order", { ascending: true }),
+      admin.from("course_modules").select("id, title"),
+      admin.from("courses").select("id, title, slug"),
+      admin.from("quiz_questions").select("quiz_id"),
+      admin.from("quiz_attempts").select("quiz_id"),
+    ]);
+  const moduleById = new Map(((modules ?? []) as Array<{ id: string; title: string }>).map((m) => [m.id, m]));
+  const courseById = new Map(((courses ?? []) as Array<{ id: string; title: string; slug: string }>).map((c) => [c.id, c]));
+  const qCount = new Map<string, number>();
+  for (const r of questions ?? []) qCount.set(r.quiz_id, (qCount.get(r.quiz_id) ?? 0) + 1);
+  const aCount = new Map<string, number>();
+  for (const r of attempts ?? []) aCount.set(r.quiz_id, (aCount.get(r.quiz_id) ?? 0) + 1);
+  return ((quizzes ?? []) as Array<{
+    id: string;
+    course_id: string;
+    module_id: string | null;
+    title: string;
+    pass_score_percent: number;
+    sort_order: number;
+  }>).map((q) => {
+    const course = courseById.get(q.course_id);
+    const mod = q.module_id ? moduleById.get(q.module_id) : null;
+    return {
+      id: q.id,
+      title: q.title,
+      pass_score_percent: q.pass_score_percent,
+      module_id: q.module_id,
+      module_title: mod?.title ?? null,
+      course_id: q.course_id,
+      course_title: course?.title ?? "—",
+      course_slug: course?.slug ?? "",
+      question_count: qCount.get(q.id) ?? 0,
+      attempt_count: aCount.get(q.id) ?? 0,
+    };
+  });
+}
+
+export async function adminProgressionStats() {
+  const admin = createSupabaseAdminClient();
+  const [{ data: enrollments }, { count: totalProfiles }] = await Promise.all([
+    admin
+      .from("course_enrollments")
+      .select("id, course_id, user_id, progress_percent, completed_at, enrolled_at"),
+    admin.from("profiles").select("id", { count: "exact", head: true }).eq("role", "student"),
+  ]);
+  const list = (enrollments ?? []) as Array<{
+    id: string;
+    course_id: string;
+    user_id: string;
+    progress_percent: number;
+    completed_at: string | null;
+    enrolled_at: string;
+  }>;
+
+  // Buckets: 0%, 1-25%, 26-50%, 51-75%, 76-99%, 100%
+  const buckets = [
+    { label: "0 %", min: 0, max: 0, count: 0 },
+    { label: "1-25 %", min: 1, max: 25, count: 0 },
+    { label: "26-50 %", min: 26, max: 50, count: 0 },
+    { label: "51-75 %", min: 51, max: 75, count: 0 },
+    { label: "76-99 %", min: 76, max: 99, count: 0 },
+    { label: "Terminé", min: 100, max: 100, count: 0 },
+  ];
+  for (const e of list) {
+    const p = e.progress_percent;
+    for (const b of buckets) {
+      if (p >= b.min && p <= b.max) {
+        b.count += 1;
+        break;
+      }
+    }
+  }
+
+  // Per-course averages
+  const byCourse = new Map<string, { sum: number; n: number; completed: number }>();
+  for (const e of list) {
+    const cur = byCourse.get(e.course_id) ?? { sum: 0, n: 0, completed: 0 };
+    cur.sum += e.progress_percent;
+    cur.n += 1;
+    if (e.completed_at) cur.completed += 1;
+    byCourse.set(e.course_id, cur);
+  }
+  const courseIds = [...byCourse.keys()];
+  const { data: courses } = courseIds.length
+    ? await admin.from("courses").select("id, title").in("id", courseIds)
+    : { data: [] };
+  const courseTitle = new Map(((courses ?? []) as Array<{ id: string; title: string }>).map((c) => [c.id, c.title]));
+  const perCourse = courseIds
+    .map((cid) => {
+      const v = byCourse.get(cid)!;
+      return {
+        course_id: cid,
+        title: courseTitle.get(cid) ?? "—",
+        average: v.n === 0 ? 0 : Math.round(v.sum / v.n),
+        completed: v.completed,
+        total: v.n,
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+
+  return {
+    totalEnrollments: list.length,
+    totalStudents: totalProfiles ?? 0,
+    completed: list.filter((e) => e.completed_at).length,
+    buckets,
+    perCourse,
+  };
 }
 
 export async function adminListEnrollments(limit = 100) {
