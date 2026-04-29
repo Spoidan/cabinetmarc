@@ -34,7 +34,7 @@ export function ContactTeaser() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
               >
-                <Badge variant="default" className="mb-4 bg-primary/10 text-primary border-primary/20">
+                <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">
                   <MessageSquare className="w-3 h-3" />
                   Nous Contacter
                 </Badge>
@@ -47,7 +47,7 @@ export function ContactTeaser() {
                   en conseil, formation ou recherche. Écrivez-nous dès aujourd&apos;hui.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button size="lg" asChild className="group">
+                  <Button size="lg" asChild className="group bg-white text-[#7B3A10] hover:bg-white/90 shadow-lg border-0">
                     <Link href="/contact">
                       Nous écrire
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -89,12 +89,12 @@ export function ContactTeaser() {
                 ))}
 
                 {/* Response time badge */}
-                <div className="flex items-center gap-3 bg-primary/10 border border-primary/20 rounded-2xl p-4">
-                  <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <Zap className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-3 bg-white/10 border border-white/20 rounded-2xl p-4">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Zap className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <div className="text-primary font-semibold text-sm">Réponse rapide</div>
+                    <div className="text-white font-semibold text-sm">Réponse rapide</div>
                     <div className="text-white/50 text-xs">Nous répondons sous 24h ouvrées</div>
                   </div>
                 </div>

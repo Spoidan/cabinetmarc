@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { Database, LessonAttachment, CourseLevel, QuizType } from "@/types/database";
+import type { Database, LessonAttachment, QuizType } from "@/types/database";
 
 type Result<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
 
@@ -12,9 +12,19 @@ type CoursePatch = Partial<Database["public"]["Tables"]["courses"]["Update"]>;
 export async function updateCourseMeta(courseId: string, patch: CoursePatch): Promise<Result> {
   await requireAdmin();
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.from("courses").update(patch).eq("id", courseId);
+  const { data: current } = await admin
+    .from("courses")
+    .select("slug")
+    .eq("id", courseId)
+    .maybeSingle();
+  // Merge patch with is_published: false so edits are never immediately live
+  const { error } = await admin.from("courses").update({ ...patch, is_published: false }).eq("id", courseId);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/admin/cours/${courseId}/editer`);
+  revalidatePath("/admin/cours");
+  revalidatePath("/cours");
+  const slug = (patch.slug as string | undefined) ?? current?.slug;
+  if (slug) revalidatePath(`/cours/${slug}`);
   return { ok: true };
 }
 
@@ -36,11 +46,12 @@ export async function createModule(courseId: string, title: string): Promise<Res
   return { ok: true, data: { id: data.id } };
 }
 
-export async function updateModule(moduleId: string, title: string): Promise<Result> {
+export async function updateModule(moduleId: string, title: string, courseId: string): Promise<Result> {
   await requireAdmin();
   const admin = createSupabaseAdminClient();
   const { error } = await admin.from("course_modules").update({ title }).eq("id", moduleId);
   if (error) return { ok: false, error: error.message };
+  await admin.from("courses").update({ is_published: false }).eq("id", courseId);
   return { ok: true };
 }
 
@@ -110,7 +121,7 @@ export async function createLesson(
   return { ok: true, data: { id: data.id } };
 }
 
-export async function updateLesson(lessonId: string, patch: LessonPatch): Promise<Result> {
+export async function updateLesson(lessonId: string, patch: LessonPatch, courseId: string): Promise<Result> {
   await requireAdmin();
   const admin = createSupabaseAdminClient();
   const { error } = await admin
@@ -118,6 +129,7 @@ export async function updateLesson(lessonId: string, patch: LessonPatch): Promis
     .update(patch as Database["public"]["Tables"]["course_lessons"]["Update"])
     .eq("id", lessonId);
   if (error) return { ok: false, error: error.message };
+  await admin.from("courses").update({ is_published: false }).eq("id", courseId);
   return { ok: true };
 }
 
@@ -304,6 +316,3 @@ export async function removeLessonAttachment(
   await admin.storage.from("lesson-attachments").remove([path]);
   return { ok: true };
 }
-
-// Re-exported for consumers that prefer to import from one module
-export type { CourseLevel };

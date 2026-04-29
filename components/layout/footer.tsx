@@ -69,7 +69,7 @@ export function Footer() {
               </div>
               <div>
                 <span className="text-lg font-bold">Cabinet <span className="text-primary">MARC</span></span>
-                <p className="text-[10px] text-white/40 leading-none tracking-wider uppercase">Excellence & Innovation</p>
+                <p className="text-[10px] text-white/60 leading-none tracking-wider uppercase">Excellence & Innovation</p>
               </div>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed mb-6">{t("description")}</p>
@@ -94,7 +94,7 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/40 mb-5">{t("quick_links")}</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/60 mb-5">{t("quick_links")}</h4>
             <ul className="space-y-3">
               {footerLinks.quickLinks.map(({ href, label_key }) => (
                 <li key={href}>
@@ -112,7 +112,7 @@ export function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/40 mb-5">{t("services")}</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/60 mb-5">{t("services")}</h4>
             <ul className="space-y-3">
               {footerLinks.services.map(({ href, label }) => (
                 <li key={href}>
@@ -128,7 +128,7 @@ export function Footer() {
             </ul>
 
             {/* Contact */}
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/40 mb-4 mt-8">{t("contact")}</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/60 mb-4 mt-8">{t("contact")}</h4>
             <ul className="space-y-2.5">
               <li className="flex items-start gap-2.5 text-sm text-white/60">
                 <Mail className="w-4 h-4 text-primary mt-0.5 shrink-0" />
@@ -147,7 +147,7 @@ export function Footer() {
 
           {/* Newsletter */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/40 mb-5">{t("newsletter")}</h4>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/60 mb-5">{t("newsletter")}</h4>
             <p className="text-sm text-white/60 mb-5 leading-relaxed">{newsletterT("description")}</p>
             <form onSubmit={handleNewsletter} className="space-y-3">
               <Input
@@ -155,7 +155,7 @@ export function Footer() {
                 placeholder={newsletterT("placeholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus-visible:ring-primary"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-primary"
                 required
               />
               <Button
@@ -177,12 +177,12 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="container mx-auto py-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-white/40">
+          <p className="text-sm text-white/50">
             © {new Date().getFullYear()} Cabinet MARC. {t("rights")}
           </p>
           <div className="flex items-center gap-6">
-            <Link href="/privacy" className="text-sm text-white/40 hover:text-white/70 transition-colors">{t("privacy")}</Link>
-            <Link href="/terms" className="text-sm text-white/40 hover:text-white/70 transition-colors">{t("terms")}</Link>
+            <Link href="/privacy" className="text-sm text-white/50 hover:text-white/80 transition-colors">{t("privacy")}</Link>
+            <Link href="/terms" className="text-sm text-white/50 hover:text-white/80 transition-colors">{t("terms")}</Link>
           </div>
         </div>
       </div>

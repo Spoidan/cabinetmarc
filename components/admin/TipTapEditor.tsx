@@ -78,7 +78,7 @@ export function TipTapEditor({ initial, onChange, placeholder }: Props) {
           {charCount} caractère{charCount > 1 ? "s" : ""}
           {wordCount !== null && ` · ${wordCount} mot${wordCount > 1 ? "s" : ""}`}
         </span>
-        <span>Markdown supporté · Sauvegarde automatique</span>
+        <span>Markdown supporté</span>
       </div>
     </div>
   );

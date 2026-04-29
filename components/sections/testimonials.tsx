@@ -77,7 +77,7 @@ export function Testimonials() {
           viewport={{ once: true }}
           className="text-center max-w-2xl mx-auto mb-16"
         >
-          <Badge variant="default" className="mb-4 bg-primary/10 text-primary border-primary/20">
+          <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">
             Témoignages
           </Badge>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-5 text-white">

@@ -37,7 +37,7 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Badge variant="default" className="mb-6 bg-primary/10 text-primary border-primary/20 text-xs font-semibold tracking-wide">
+              <Badge variant="default" className="mb-6 bg-white/10 text-white border-white/20 text-xs font-semibold tracking-wide">
                 <Star className="w-3 h-3 fill-current" />
                 Nouveau : E-Learning disponible
               </Badge>

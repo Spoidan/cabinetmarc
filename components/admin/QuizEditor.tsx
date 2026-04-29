@@ -16,13 +16,12 @@ import type { QuizType } from "@/types/database";
 
 type Props = {
   quiz: { id: string; title: string; pass_score_percent: number; module_id: string | null };
-  onSaveStart: () => void;
-  onSaved: () => void;
+  registerSave: (fn: () => Promise<void>) => void;
   refresh: () => void;
   onDelete: () => void;
 };
 
-export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Props) {
+export function QuizEditor({ quiz, registerSave, refresh, onDelete }: Props) {
   const [title, setTitle] = React.useState(quiz.title);
   const [score, setScore] = React.useState(quiz.pass_score_percent);
   const [questions, setQuestions] = React.useState<QuestionDraft[]>([]);
@@ -51,13 +50,15 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
           id: q.id,
           question: q.question,
           type: q.type as QuizType,
-          options: ((opts ?? []) as Array<{
-            id: string;
-            question_id: string;
-            label: string;
-            is_correct: boolean;
-            sort_order: number;
-          }>)
+          options: (
+            (opts ?? []) as Array<{
+              id: string;
+              question_id: string;
+              label: string;
+              is_correct: boolean;
+              sort_order: number;
+            }>
+          )
             .filter((o) => o.question_id === q.id)
             .map((o) => ({ id: o.id, label: o.label, is_correct: o.is_correct })),
         }))
@@ -69,11 +70,46 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
     };
   }, [quiz.id]);
 
-  const saveTitle = async () => {
-    onSaveStart();
+  const validate = (qs: QuestionDraft[]): boolean => {
+    for (const [i, q] of qs.entries()) {
+      if (q.options.length === 0) {
+        toast.error(`Question ${i + 1} : ajoutez au moins une option.`);
+        return false;
+      }
+      const correct = q.options.filter((o) => o.is_correct).length;
+      if ((q.type === "single" || q.type === "true_false") && correct !== 1) {
+        toast.error(`Question ${i + 1} : exactement une bonne réponse requise.`);
+        return false;
+      }
+      if (q.type === "multiple" && correct < 1) {
+        toast.error(`Question ${i + 1} : au moins une bonne réponse requise.`);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleSave = React.useCallback(async () => {
+    if (!validate(questions)) throw new Error("validation");
     await updateQuiz(quiz.id, { title, pass_score_percent: score });
-    onSaved();
+    const res = await saveQuestions(quiz.id, questions);
+    if (!res.ok) throw new Error(res.error);
     refresh();
+  }, [title, score, questions, quiz.id, refresh]);
+
+  React.useEffect(() => {
+    registerSave(handleSave);
+  }, [registerSave, handleSave]);
+
+  const saveFromPanel = async () => {
+    try {
+      await handleSave();
+      toast.success("Enregistré avec succès");
+    } catch (err) {
+      if ((err as Error)?.message !== "validation") {
+        toast.error("Erreur lors de l'enregistrement");
+      }
+    }
   };
 
   const addQuestion = () => {
@@ -89,10 +125,12 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
       },
     ]);
   };
+
   const updateQ = (i: number, patch: Partial<QuestionDraft>) =>
     setQuestions((qs) =>
       qs.map((q, idx) => (idx === i ? { ...q, ...patch } : q))
     );
+
   const updateOpt = (
     qi: number,
     oi: number,
@@ -108,6 +146,7 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
           : q
       )
     );
+
   const setSingleCorrect = (qi: number, oi: number) =>
     setQuestions((qs) =>
       qs.map((q, idx) =>
@@ -119,6 +158,7 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
           : q
       )
     );
+
   const move = (i: number, dir: -1 | 1) => {
     setQuestions((qs) => {
       const next = [...qs];
@@ -126,34 +166,6 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
       next.splice(i + dir, 0, q);
       return next;
     });
-  };
-
-  const persistQuestions = async () => {
-    // Validate
-    for (const [i, q] of questions.entries()) {
-      if (q.options.length === 0) {
-        toast.error(`Question ${i + 1} : ajoutez au moins une option.`);
-        return;
-      }
-      const correct = q.options.filter((o) => o.is_correct).length;
-      if ((q.type === "single" || q.type === "true_false") && correct !== 1) {
-        toast.error(`Question ${i + 1} : exactement une bonne réponse requise.`);
-        return;
-      }
-      if (q.type === "multiple" && correct < 1) {
-        toast.error(`Question ${i + 1} : au moins une bonne réponse requise.`);
-        return;
-      }
-    }
-    onSaveStart();
-    const res = await saveQuestions(quiz.id, questions);
-    if (!res.ok) {
-      toast.error(res.error);
-    } else {
-      toast.success("Questions enregistrées.");
-    }
-    onSaved();
-    refresh();
   };
 
   if (!loaded) {
@@ -178,7 +190,6 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
               id="quiz-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              onBlur={saveTitle}
             />
           </div>
           <div className="space-y-1.5">
@@ -190,12 +201,13 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
               max={100}
               value={score}
               onChange={(e) => setScore(parseInt(e.target.value, 10) || 0)}
-              onBlur={saveTitle}
             />
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {quiz.module_id ? "Quiz de module" : "Quiz de fin de cours (examen final)"}
+          {quiz.module_id
+            ? "Quiz de module"
+            : "Quiz de fin de cours (examen final)"}
         </p>
       </div>
 
@@ -218,7 +230,9 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
               </div>
               <div className="flex-1 space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Question {qi + 1}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Question {qi + 1}
+                  </span>
                   <select
                     value={q.type}
                     onChange={(e) =>
@@ -232,7 +246,9 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
                   </select>
                   <button
                     type="button"
-                    onClick={() => setQuestions((qs) => qs.filter((_, i) => i !== qi))}
+                    onClick={() =>
+                      setQuestions((qs) => qs.filter((_, i) => i !== qi))
+                    }
                     className="ml-auto text-destructive text-xs hover:underline"
                   >
                     Supprimer
@@ -262,7 +278,9 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
                       />
                       <Input
                         value={opt.label}
-                        onChange={(e) => updateOpt(qi, oi, { label: e.target.value })}
+                        onChange={(e) =>
+                          updateOpt(qi, oi, { label: e.target.value })
+                        }
                         placeholder="Option..."
                         className="flex-1"
                       />
@@ -272,7 +290,10 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
                           setQuestions((qs) =>
                             qs.map((qq, ii) =>
                               ii === qi
-                                ? { ...qq, options: qq.options.filter((_, j) => j !== oi) }
+                                ? {
+                                    ...qq,
+                                    options: qq.options.filter((_, j) => j !== oi),
+                                  }
                                 : qq
                             )
                           )
@@ -291,7 +312,13 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
                     setQuestions((qs) =>
                       qs.map((qq, ii) =>
                         ii === qi
-                          ? { ...qq, options: [...qq.options, { label: "Nouvelle option", is_correct: false }] }
+                          ? {
+                              ...qq,
+                              options: [
+                                ...qq.options,
+                                { label: "Nouvelle option", is_correct: false },
+                              ],
+                            }
                           : qq
                       )
                     )
@@ -313,7 +340,7 @@ export function QuizEditor({ quiz, onSaveStart, onSaved, refresh, onDelete }: Pr
         <p className="text-sm text-muted-foreground">
           {questions.length} question{questions.length > 1 ? "s" : ""}
         </p>
-        <Button onClick={persistQuestions}>Enregistrer les questions</Button>
+        <Button onClick={saveFromPanel}>Enregistrer</Button>
       </div>
     </div>
   );

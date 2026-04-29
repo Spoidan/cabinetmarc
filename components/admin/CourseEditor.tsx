@@ -14,6 +14,7 @@ import {
   Settings,
   Loader2,
   GripVertical,
+  Save,
 } from "lucide-react";
 import {
   DndContext,
@@ -55,7 +56,6 @@ import {
   updateLesson,
   deleteLesson,
   createQuiz,
-  updateQuiz,
   deleteQuiz,
 } from "@/app/(admin)/admin/cours/[id]/editor-actions";
 import type { CourseOutline } from "@/lib/elearning/queries";
@@ -88,25 +88,46 @@ export function CourseEditor({ outline, categories }: Props) {
     | null
   >(null);
 
+  const saveFnRef = React.useRef<(() => Promise<void>) | null>(null);
+
+  const registerSave = React.useCallback((fn: () => Promise<void>) => {
+    saveFnRef.current = fn;
+  }, []);
+
+  const handleExplicitSave = async () => {
+    if (!saveFnRef.current) return;
+    const wasPublished = course.is_published;
+    setPending(true);
+    try {
+      await saveFnRef.current();
+      setSavedAt(new Date());
+      if (wasPublished) {
+        toast.success("Enregistré en brouillon. Cliquez sur Publier pour rendre les modifications visibles aux apprenants.");
+      } else {
+        toast.success("Enregistré avec succès");
+      }
+    } catch (err) {
+      const msg = (err as Error)?.message;
+      if (msg !== "validation") {
+        toast.error(msg || "Erreur lors de l'enregistrement");
+      }
+    } finally {
+      setPending(false);
+    }
+  };
+
   const refresh = React.useCallback(() => router.refresh(), [router]);
 
-  const announceSaved = () => {
-    setSavedAt(new Date());
-    setPending(false);
-  };
-  const onSaveStart = () => {
-    setPending(true);
-  };
-
   const addModule = async () => {
-    onSaveStart();
+    setPending(true);
     const res = await createModule(course.id, "Nouveau module");
     if (!res.ok) {
       toast.error(res.error);
       setPending(false);
       return;
     }
-    announceSaved();
+    setSavedAt(new Date());
+    setPending(false);
     if (res.data) setSelection({ kind: "module", id: res.data.id });
     refresh();
   };
@@ -119,10 +140,11 @@ export function CourseEditor({ outline, categories }: Props) {
     const newIdx = ids.indexOf(String(over.id));
     if (oldIdx < 0 || newIdx < 0) return;
     const next = arrayMove(ids, oldIdx, newIdx);
-    onSaveStart();
+    setPending(true);
     const res = await reorderModules(course.id, next);
     if (!res.ok) toast.error(res.error);
-    announceSaved();
+    setSavedAt(new Date());
+    setPending(false);
     refresh();
   };
 
@@ -136,10 +158,11 @@ export function CourseEditor({ outline, categories }: Props) {
     const newIdx = ids.indexOf(String(over.id));
     if (oldIdx < 0 || newIdx < 0) return;
     const next = arrayMove(ids, oldIdx, newIdx);
-    onSaveStart();
+    setPending(true);
     const res = await reorderLessons(moduleId, next);
     if (!res.ok) toast.error(res.error);
-    announceSaved();
+    setSavedAt(new Date());
+    setPending(false);
     refresh();
   };
 
@@ -149,7 +172,7 @@ export function CourseEditor({ outline, categories }: Props) {
   );
 
   const addLesson = async (moduleId: string) => {
-    onSaveStart();
+    setPending(true);
     const res = await createLesson(moduleId, {
       title: "Nouvelle leçon",
       slug: `lecon-${Date.now().toString(36)}`,
@@ -159,13 +182,14 @@ export function CourseEditor({ outline, categories }: Props) {
       setPending(false);
       return;
     }
-    announceSaved();
+    setSavedAt(new Date());
+    setPending(false);
     if (res.data) setSelection({ kind: "lesson", id: res.data.id });
     refresh();
   };
 
   const addQuiz = async (moduleId: string | null) => {
-    onSaveStart();
+    setPending(true);
     const res = await createQuiz(course.id, {
       title: moduleId ? "Quiz de module" : "Examen final",
       module_id: moduleId,
@@ -175,14 +199,15 @@ export function CourseEditor({ outline, categories }: Props) {
       setPending(false);
       return;
     }
-    announceSaved();
+    setSavedAt(new Date());
+    setPending(false);
     if (res.data) setSelection({ kind: "quiz", id: res.data.id });
     refresh();
   };
 
   const performDelete = async () => {
     if (!confirmDelete) return;
-    onSaveStart();
+    setPending(true);
     let error: string | null = null;
     if (confirmDelete.kind === "module") {
       const res = await deleteModule(confirmDelete.id);
@@ -198,7 +223,8 @@ export function CourseEditor({ outline, categories }: Props) {
     else toast.success("Élément supprimé.");
     setConfirmDelete(null);
     setSelection({ kind: "course" });
-    announceSaved();
+    setSavedAt(new Date());
+    setPending(false);
     refresh();
   };
 
@@ -233,10 +259,7 @@ export function CourseEditor({ outline, categories }: Props) {
           >
             <div className="mt-4 space-y-3">
               {modules.map((mod, idx) => (
-                <SortableModule
-                  key={mod.id}
-                  id={mod.id}
-                >
+                <SortableModule key={mod.id} id={mod.id}>
                   <div className="rounded-lg border border-border bg-card">
                     <div className="flex items-center px-2 py-1.5 gap-1">
                       <SortableHandle title="Glisser pour réordonner le module" />
@@ -254,7 +277,9 @@ export function CourseEditor({ outline, categories }: Props) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setConfirmDelete({ kind: "module", id: mod.id, title: mod.title })}
+                        onClick={() =>
+                          setConfirmDelete({ kind: "module", id: mod.id, title: mod.title })
+                        }
                         className="w-6 h-6 rounded hover:bg-destructive/10 text-destructive/80 flex items-center justify-center"
                         title="Supprimer le module"
                         aria-label="Supprimer le module"
@@ -273,10 +298,7 @@ export function CourseEditor({ outline, categories }: Props) {
                           strategy={verticalListSortingStrategy}
                         >
                           {mod.lessons.map((lesson) => (
-                            <SortableLessonRow
-                              key={lesson.id}
-                              id={lesson.id}
-                            >
+                            <SortableLessonRow key={lesson.id} id={lesson.id}>
                               <div
                                 className={cn(
                                   "flex items-center gap-1.5 rounded text-xs",
@@ -288,7 +310,9 @@ export function CourseEditor({ outline, categories }: Props) {
                                 <SortableHandle compact title="Glisser pour réordonner la leçon" />
                                 <button
                                   type="button"
-                                  onClick={() => setSelection({ kind: "lesson", id: lesson.id })}
+                                  onClick={() =>
+                                    setSelection({ kind: "lesson", id: lesson.id })
+                                  }
                                   className="flex-1 flex items-center gap-2 px-1 py-1.5 text-left"
                                 >
                                   <CircleDot className="w-3 h-3 shrink-0" />
@@ -343,35 +367,37 @@ export function CourseEditor({ outline, categories }: Props) {
         </DndContext>
 
         {finalQuizzes.length > 0 && (
-            <div className="rounded-lg border border-border p-2 space-y-0.5">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-2 pb-1">
-                Examen final
-              </p>
-              {finalQuizzes.map((quiz) => (
-                <button
-                  key={quiz.id}
-                  type="button"
-                  onClick={() => setSelection({ kind: "quiz", id: quiz.id })}
-                  className={cn(
-                    "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs",
-                    selection.kind === "quiz" && selection.id === quiz.id
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <CheckCircle2 className="w-3 h-3 shrink-0 text-amber-500" />
-                  <span className="truncate">{quiz.title}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="rounded-lg border border-border p-2 space-y-0.5 mt-3">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-2 pb-1">
+              Examen final
+            </p>
+            {finalQuizzes.map((quiz) => (
+              <button
+                key={quiz.id}
+                type="button"
+                onClick={() => setSelection({ kind: "quiz", id: quiz.id })}
+                className={cn(
+                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs",
+                  selection.kind === "quiz" && selection.id === quiz.id
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <CheckCircle2 className="w-3 h-3 shrink-0 text-amber-500" />
+                <span className="truncate">{quiz.title}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
-        <Button variant="outline" className="w-full" onClick={addModule}>
-          <Plus className="w-4 h-4" /> Module
-        </Button>
-        <Button variant="ghost" className="w-full" onClick={() => addQuiz(null)}>
-          <Plus className="w-4 h-4" /> Quiz final
-        </Button>
+        <div className="mt-3 space-y-1.5">
+          <Button variant="outline" className="w-full" onClick={addModule}>
+            <Plus className="w-4 h-4" /> Module
+          </Button>
+          <Button variant="ghost" className="w-full" onClick={() => addQuiz(null)}>
+            <Plus className="w-4 h-4" /> Quiz final
+          </Button>
+        </div>
       </aside>
 
       <div className="flex flex-col">
@@ -390,6 +416,19 @@ export function CourseEditor({ outline, categories }: Props) {
             <Button
               variant="outline"
               size="sm"
+              onClick={handleExplicitSave}
+              disabled={pending}
+            >
+              {pending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Enregistrer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               asChild
               onClick={() => setPreviewVisitedThisSession(true)}
             >
@@ -401,66 +440,101 @@ export function CourseEditor({ outline, categories }: Props) {
             <Button
               size="sm"
               onClick={() => setPublishOpen(true)}
-              disabled={course.is_published}
             >
-              {course.is_published ? "Publié" : "Publier"}
+              {course.is_published ? "Mettre à jour" : "Publier"}
             </Button>
           </div>
         </div>
 
         <div className="p-6 lg:p-8 space-y-6 overflow-y-auto">
           {selection.kind === "course" && (
-            <CourseMetaPanel
-              course={course}
-              categories={categories}
-              onSaveStart={onSaveStart}
-              onSaved={announceSaved}
-              onError={toast.error}
-              refresh={refresh}
-            />
+            <>
+              <CourseMetaPanel
+                course={course}
+                categories={categories}
+                registerSave={registerSave}
+                refresh={refresh}
+              />
+              {modules.length === 0 && (
+                <div className="rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-8 text-center space-y-4 max-w-3xl">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                    <Plus className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-sm">Prochaine étape : créer un module</h2>
+                    <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
+                      Un module regroupe les leçons de votre cours. Créez au moins un module, puis ajoutez-y des leçons.
+                    </p>
+                  </div>
+                  <Button onClick={addModule} disabled={pending} size="sm">
+                    <Plus className="w-4 h-4" />
+                    Ajouter le premier module
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-          {selection.kind === "module" && (() => {
-            const mod = modules.find((m) => m.id === selection.id);
-            if (!mod) return <p className="text-muted-foreground">Module introuvable.</p>;
-            return (
-              <ModulePanel
-                module={mod}
-                onSaveStart={onSaveStart}
-                onSaved={announceSaved}
-                refresh={refresh}
-              />
-            );
-          })()}
-          {selection.kind === "lesson" && (() => {
-            const lesson = allLessons.find((l) => l.id === selection.id);
-            if (!lesson) return <p className="text-muted-foreground">Leçon introuvable.</p>;
-            return (
-              <LessonPanel
-                lesson={lesson}
-                onSaveStart={onSaveStart}
-                onSaved={announceSaved}
-                refresh={refresh}
-                onDelete={() =>
-                  setConfirmDelete({ kind: "lesson", id: lesson.id, title: lesson.title })
-                }
-              />
-            );
-          })()}
-          {selection.kind === "quiz" && (() => {
-            const quiz = allQuizzes.find((q) => q.id === selection.id);
-            if (!quiz) return <p className="text-muted-foreground">Quiz introuvable.</p>;
-            return (
-              <QuizEditor
-                quiz={quiz}
-                onSaveStart={onSaveStart}
-                onSaved={announceSaved}
-                refresh={refresh}
-                onDelete={() =>
-                  setConfirmDelete({ kind: "quiz", id: quiz.id, title: quiz.title })
-                }
-              />
-            );
-          })()}
+          {selection.kind === "module" &&
+            (() => {
+              const mod = modules.find((m) => m.id === selection.id);
+              if (!mod)
+                return (
+                  <p className="text-muted-foreground">Module introuvable.</p>
+                );
+              return (
+                <ModulePanel
+                  module={mod}
+                  courseId={course.id}
+                  registerSave={registerSave}
+                  refresh={refresh}
+                />
+              );
+            })()}
+          {selection.kind === "lesson" &&
+            (() => {
+              const lesson = allLessons.find((l) => l.id === selection.id);
+              if (!lesson)
+                return (
+                  <p className="text-muted-foreground">Leçon introuvable.</p>
+                );
+              return (
+                <LessonPanel
+                  lesson={lesson}
+                  courseId={course.id}
+                  registerSave={registerSave}
+                  refresh={refresh}
+                  onDelete={() =>
+                    setConfirmDelete({
+                      kind: "lesson",
+                      id: lesson.id,
+                      title: lesson.title,
+                    })
+                  }
+                />
+              );
+            })()}
+          {selection.kind === "quiz" &&
+            (() => {
+              const quiz = allQuizzes.find((q) => q.id === selection.id);
+              if (!quiz)
+                return (
+                  <p className="text-muted-foreground">Quiz introuvable.</p>
+                );
+              return (
+                <QuizEditor
+                  quiz={quiz}
+                  registerSave={registerSave}
+                  refresh={refresh}
+                  onDelete={() =>
+                    setConfirmDelete({
+                      kind: "quiz",
+                      id: quiz.id,
+                      title: quiz.title,
+                    })
+                  }
+                />
+              );
+            })()}
         </div>
       </div>
 
@@ -492,7 +566,7 @@ export function CourseEditor({ outline, categories }: Props) {
   );
 }
 
-// --------- Sortable components (dnd-kit wrappers)
+// --------- Sortable wrappers
 function SortableModule({
   id,
   children,
@@ -500,13 +574,9 @@ function SortableModule({
   id: string;
   children: React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const { setNodeRef, transform, transition } = useSortable({ id });
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}>
       {children}
     </div>
   );
@@ -520,12 +590,13 @@ function SortableLessonRow({
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
   return (
-    <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      {...attributes}
+      {...listeners}
+    >
       {children}
     </li>
   );
@@ -560,39 +631,49 @@ function SortableHandle({
 function CourseMetaPanel({
   course,
   categories,
-  onSaveStart,
-  onSaved,
-  onError,
+  registerSave,
   refresh,
 }: {
   course: CourseOutline["course"];
   categories: { id: string; name: string }[];
-  onSaveStart: () => void;
-  onSaved: () => void;
-  onError: (msg: string) => void;
+  registerSave: (fn: () => Promise<void>) => void;
   refresh: () => void;
 }) {
-  const [title, setTitle] = useDebouncedField(course.title, async (v) => {
-    if (!v.trim()) return;
-    onSaveStart();
-    const res = await updateCourseMeta(course.id, { title: v });
-    if (!res.ok) onError(res.error);
-    onSaved();
+  const [title, setTitle] = React.useState(course.title);
+  const [subtitle, setSubtitle] = React.useState(course.subtitle ?? "");
+  const [slug, setSlug] = React.useState(course.slug);
+  const [categoryId, setCategoryId] = React.useState(course.category_id);
+  const [level, setLevel] = React.useState(course.level);
+  const [duration, setDuration] = React.useState(course.duration_minutes ?? 0);
+  const [price, setPrice] = React.useState(course.price_bif);
+  const descriptionRef = React.useRef(course.description ?? "");
+
+  const handleSave = React.useCallback(async () => {
+    if (!title.trim()) {
+      toast.error("Le titre est requis");
+      throw new Error("validation");
+    }
+    if (!slug.trim()) {
+      toast.error("Le slug est requis");
+      throw new Error("validation");
+    }
+    const res = await updateCourseMeta(course.id, {
+      title: title.trim(),
+      subtitle: subtitle.trim() || null,
+      slug: slug.trim(),
+      category_id: categoryId,
+      level: level as "debutant" | "intermediaire" | "avance",
+      duration_minutes: duration,
+      price_bif: Math.max(0, price),
+      description: descriptionRef.current,
+    });
+    if (!res.ok) throw new Error(res.error);
     refresh();
-  });
-  const [subtitle, setSubtitle] = useDebouncedField(course.subtitle ?? "", async (v) => {
-    onSaveStart();
-    await updateCourseMeta(course.id, { subtitle: v || null });
-    onSaved();
-  });
-  const [slug, setSlug] = useDebouncedField(course.slug, async (v) => {
-    if (!v.trim()) return;
-    onSaveStart();
-    const res = await updateCourseMeta(course.id, { slug: v });
-    if (!res.ok) onError(res.error);
-    onSaved();
-    refresh();
-  });
+  }, [title, subtitle, slug, categoryId, level, duration, price, course.id, refresh]);
+
+  React.useEffect(() => {
+    registerSave(handleSave);
+  }, [registerSave, handleSave]);
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -626,53 +707,53 @@ function CourseMetaPanel({
           <p className="text-xs text-muted-foreground">/cours/{slug}</p>
         </div>
         <div className="grid sm:grid-cols-3 gap-4">
-          <SelectField
-            label="Catégorie"
-            value={course.category_id}
-            options={categories.map((c) => ({ value: c.id, label: c.name }))}
-            onChange={async (v) => {
-              onSaveStart();
-              await updateCourseMeta(course.id, { category_id: v });
-              onSaved();
-              refresh();
-            }}
-          />
-          <SelectField
-            label="Niveau"
-            value={course.level}
-            options={[
-              { value: "debutant", label: "Débutant" },
-              { value: "intermediaire", label: "Intermédiaire" },
-              { value: "avance", label: "Avancé" },
-            ]}
-            onChange={async (v) => {
-              onSaveStart();
-              await updateCourseMeta(course.id, {
-                level: v as "debutant" | "intermediaire" | "avance",
-              });
-              onSaved();
-              refresh();
-            }}
-          />
-          <NumberField
-            label="Durée (min)"
-            value={course.duration_minutes ?? 0}
-            onChange={async (v) => {
-              onSaveStart();
-              await updateCourseMeta(course.id, { duration_minutes: v });
-              onSaved();
-            }}
+          <div className="space-y-1.5">
+            <Label>Catégorie</Label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Niveau</Label>
+            <select
+              value={level}
+              onChange={(e) =>
+                setLevel(e.target.value as "debutant" | "intermediaire" | "avance")
+              }
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
+            >
+              <option value="debutant">Débutant</option>
+              <option value="intermediaire">Intermédiaire</option>
+              <option value="avance">Avancé</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Durée (min)</Label>
+            <Input
+              type="number"
+              min={0}
+              value={duration}
+              onChange={(e) => setDuration(parseInt(e.target.value, 10) || 0)}
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>{`Prix (BIF)${price > 0 ? ` — ${formatBIF(price)}` : " — Gratuit"}`}</Label>
+          <Input
+            type="number"
+            min={0}
+            value={price}
+            onChange={(e) => setPrice(parseInt(e.target.value, 10) || 0)}
           />
         </div>
-        <NumberField
-          label={`Prix (BIF)${course.price_bif > 0 ? ` — ${formatBIF(course.price_bif)}` : " — Gratuit"}`}
-          value={course.price_bif}
-          onChange={async (v) => {
-            onSaveStart();
-            await updateCourseMeta(course.id, { price_bif: Math.max(0, v) });
-            onSaved();
-          }}
-        />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-5">
@@ -684,10 +765,8 @@ function CourseMetaPanel({
         <h2 className="text-sm font-semibold mb-3">Description</h2>
         <TipTapEditor
           initial={course.description ?? ""}
-          onChange={async (html) => {
-            onSaveStart();
-            await updateCourseMeta(course.id, { description: html });
-            onSaved();
+          onChange={(html) => {
+            descriptionRef.current = html;
           }}
           placeholder="Décrivez ce que les apprenants vont apprendre..."
         />
@@ -698,28 +777,41 @@ function CourseMetaPanel({
 
 function ModulePanel({
   module: mod,
-  onSaveStart,
-  onSaved,
+  courseId,
+  registerSave,
   refresh,
 }: {
   module: { id: string; title: string };
-  onSaveStart: () => void;
-  onSaved: () => void;
+  courseId: string;
+  registerSave: (fn: () => Promise<void>) => void;
   refresh: () => void;
 }) {
-  const [title, setTitle] = useDebouncedField(mod.title, async (v) => {
-    if (!v.trim()) return;
-    onSaveStart();
-    await updateModule(mod.id, v);
-    onSaved();
+  const [title, setTitle] = React.useState(mod.title);
+
+  const handleSave = React.useCallback(async () => {
+    if (!title.trim()) {
+      toast.error("Le titre du module est requis");
+      throw new Error("validation");
+    }
+    const res = await updateModule(mod.id, title.trim(), courseId);
+    if (!res.ok) throw new Error(res.error);
     refresh();
-  });
+  }, [title, mod.id, courseId, refresh]);
+
+  React.useEffect(() => {
+    registerSave(handleSave);
+  }, [registerSave, handleSave]);
+
   return (
     <div className="max-w-3xl space-y-4">
       <h1 className="text-xl font-bold">Module</h1>
       <div className="space-y-1.5">
         <Label htmlFor="mod-title">Titre du module</Label>
-        <Input id="mod-title" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Input
+          id="mod-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
       </div>
     </div>
   );
@@ -727,8 +819,8 @@ function ModulePanel({
 
 function LessonPanel({
   lesson,
-  onSaveStart,
-  onSaved,
+  courseId,
+  registerSave,
   refresh,
   onDelete,
 }: {
@@ -742,32 +834,38 @@ function LessonPanel({
     duration_minutes: number | null;
     is_free_preview: boolean;
   };
-  onSaveStart: () => void;
-  onSaved: () => void;
+  courseId: string;
+  registerSave: (fn: () => Promise<void>) => void;
   refresh: () => void;
   onDelete: () => void;
 }) {
-  const [title, setTitle] = useDebouncedField(lesson.title, async (v) => {
-    if (!v.trim()) return;
-    onSaveStart();
-    await updateLesson(lesson.id, { title: v, slug: lesson.slug || slugify(v) });
-    onSaved();
-    refresh();
-  });
-  const [slug, setSlug] = useDebouncedField(lesson.slug, async (v) => {
-    if (!v.trim()) return;
-    onSaveStart();
-    await updateLesson(lesson.id, { slug: v });
-    onSaved();
-    refresh();
-  });
-  const [videoUrl, setVideoUrl] = useDebouncedField(lesson.video_url ?? "", async (v) => {
-    onSaveStart();
-    await updateLesson(lesson.id, { video_url: v.trim() ? v : null });
-    onSaved();
-  });
-  const [duration, setDuration] = React.useState<number>(lesson.duration_minutes ?? 0);
+  const [title, setTitle] = React.useState(lesson.title);
+  const [slug, setSlug] = React.useState(lesson.slug);
+  const [videoUrl, setVideoUrl] = React.useState(lesson.video_url ?? "");
+  const [duration, setDuration] = React.useState(lesson.duration_minutes ?? 0);
   const [free, setFree] = React.useState(lesson.is_free_preview);
+  const contentRef = React.useRef(lesson.content);
+
+  const handleSave = React.useCallback(async () => {
+    if (!title.trim()) {
+      toast.error("Le titre de la leçon est requis");
+      throw new Error("validation");
+    }
+    const res = await updateLesson(lesson.id, {
+      title: title.trim(),
+      slug: slug.trim() || slugify(title.trim()),
+      video_url: videoUrl.trim() || null,
+      duration_minutes: duration,
+      is_free_preview: free,
+      content: contentRef.current,
+    }, courseId);
+    if (!res.ok) throw new Error(res.error);
+    refresh();
+  }, [title, slug, videoUrl, duration, free, lesson.id, courseId, refresh]);
+
+  React.useEffect(() => {
+    registerSave(handleSave);
+  }, [registerSave, handleSave]);
 
   return (
     <div className="max-w-3xl space-y-5">
@@ -799,7 +897,9 @@ function LessonPanel({
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="lesson-video">Vidéo (URL YouTube/Vimeo ou chemin storage)</Label>
+            <Label htmlFor="lesson-video">
+              Vidéo (URL YouTube/Vimeo ou chemin storage)
+            </Label>
             <Input
               id="lesson-video"
               value={videoUrl}
@@ -815,11 +915,6 @@ function LessonPanel({
               min={0}
               value={duration}
               onChange={(e) => setDuration(parseInt(e.target.value, 10) || 0)}
-              onBlur={async () => {
-                onSaveStart();
-                await updateLesson(lesson.id, { duration_minutes: duration });
-                onSaved();
-              }}
             />
           </div>
         </div>
@@ -827,13 +922,7 @@ function LessonPanel({
           <input
             type="checkbox"
             checked={free}
-            onChange={async (e) => {
-              setFree(e.target.checked);
-              onSaveStart();
-              await updateLesson(lesson.id, { is_free_preview: e.target.checked });
-              onSaved();
-              refresh();
-            }}
+            onChange={(e) => setFree(e.target.checked)}
             className="accent-primary"
           />
           Aperçu gratuit (visible sans inscription)
@@ -844,10 +933,8 @@ function LessonPanel({
         <h2 className="text-sm font-semibold mb-3">Contenu</h2>
         <TipTapEditor
           initial={lesson.content}
-          onChange={async (html) => {
-            onSaveStart();
-            await updateLesson(lesson.id, { content: html });
-            onSaved();
+          onChange={(html) => {
+            contentRef.current = html;
           }}
           placeholder="Rédigez la leçon..."
         />
@@ -858,96 +945,12 @@ function LessonPanel({
         <LessonAttachmentList
           lessonId={lesson.id}
           attachments={lesson.attachments}
-          onChange={() => {
-            onSaveStart();
-            onSaved();
-            refresh();
-          }}
+          onChange={() => refresh()}
         />
       </div>
     </div>
   );
 }
 
-// ---------- shared little fields
-function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function NumberField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  const [v, setV] = React.useState(value);
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <Input
-        type="number"
-        min={0}
-        value={v}
-        onChange={(e) => setV(parseInt(e.target.value, 10) || 0)}
-        onBlur={() => onChange(v)}
-      />
-    </div>
-  );
-}
-
-function useDebouncedField(
-  initial: string,
-  save: (v: string) => Promise<void> | void,
-  delay = 600
-) {
-  const [value, setValue] = React.useState(initial);
-  const valueRef = React.useRef(value);
-  valueRef.current = value;
-  const initialRef = React.useRef(initial);
-
-  React.useEffect(() => {
-    if (initial !== initialRef.current) {
-      initialRef.current = initial;
-      setValue(initial);
-    }
-  }, [initial]);
-
-  React.useEffect(() => {
-    if (value === initialRef.current) return;
-    const t = setTimeout(() => save(valueRef.current), delay);
-    return () => clearTimeout(t);
-  }, [value, delay, save]);
-
-  return [value, setValue] as const;
-}
-
-// Loader2 stub used in autosave indicator (re-export)
+// Loader2 stub used by other modules that import from this file
 export { Loader2 };

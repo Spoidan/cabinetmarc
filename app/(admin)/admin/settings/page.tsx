@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Globe, Palette, Type, Share2, Search, Mail, Loader2 } from "lucide-react";
+import { Save, Globe, Palette, Share2, Search, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,14 +13,10 @@ import { toast } from "sonner";
 const sections = [
   { key: "general", label: "Général", icon: Globe },
   { key: "branding", label: "Marque & Couleurs", icon: Palette },
-  { key: "typography", label: "Typographie", icon: Type },
   { key: "seo", label: "SEO & Méta", icon: Search },
   { key: "social", label: "Réseaux sociaux", icon: Share2 },
   { key: "email", label: "Email", icon: Mail },
 ];
-
-const headingFonts = ["Playfair Display", "Merriweather", "Lora", "Georgia", "Inter", "Roboto"];
-const bodyFonts = ["Inter", "Roboto", "Open Sans", "Lato", "Source Sans Pro", "Nunito"];
 
 type Settings = {
   id?: string;
@@ -33,8 +29,6 @@ type Settings = {
   primary_color: string;
   secondary_color: string;
   accent_color: string;
-  font_heading: string;
-  font_body: string;
   meta_title: string;
   meta_description: string;
   google_analytics_id: string;
@@ -55,8 +49,6 @@ const defaults: Settings = {
   primary_color: "#059669",
   secondary_color: "#0A0F1E",
   accent_color: "#D97706",
-  font_heading: "Playfair Display",
-  font_body: "Inter",
   meta_title: "Cabinet MARC | Conseil, Formation & E-Learning au Burundi",
   meta_description: "",
   google_analytics_id: "",
@@ -205,50 +197,6 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-
-          {activeSection === "typography" && (
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <Label>Police des titres</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {headingFonts.map((font) => (
-                    <button
-                      key={font}
-                      onClick={() => update("font_heading", font)}
-                      className={`px-4 py-3 rounded-xl border text-sm text-left transition-colors ${
-                        settings.font_heading === font
-                          ? "border-primary bg-primary/5 text-primary font-medium"
-                          : "border-border hover:border-primary/50 hover:bg-muted"
-                      }`}
-                      style={{ fontFamily: font }}
-                    >
-                      {font}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <Separator />
-              <div className="space-y-3">
-                <Label>Police du texte courant</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {bodyFonts.map((font) => (
-                    <button
-                      key={font}
-                      onClick={() => update("font_body", font)}
-                      className={`px-4 py-3 rounded-xl border text-sm text-left transition-colors ${
-                        settings.font_body === font
-                          ? "border-primary bg-primary/5 text-primary font-medium"
-                          : "border-border hover:border-primary/50 hover:bg-muted"
-                      }`}
-                      style={{ fontFamily: font }}
-                    >
-                      {font}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 

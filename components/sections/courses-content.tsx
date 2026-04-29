@@ -3,12 +3,8 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  TrendingUp, Briefcase, Scale, BarChart2, Rocket, Monitor,
-  ArrowRight, Clock, Users, Star, BookOpen, Filter, Search
-} from "lucide-react";
+import { ArrowRight, Clock, Users, Star, BookOpen, Filter, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface Course {
@@ -72,7 +68,6 @@ export function CoursesPageContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     fetch("/api/courses")
       .then((r) => r.json())
       .then((json) => {
@@ -176,7 +171,7 @@ export function CoursesPageContent() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                   >
-                    <Link href={`/courses/${course.slug}`}>
+                    <Link href={`/cours/${course.slug}`}>
                       <div className="group rounded-2xl border border-border bg-card hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden card-shine h-full flex flex-col">
                         {/* Thumbnail */}
                         <div className={`h-40 bg-gradient-to-br ${gradient} flex items-center justify-center relative`}>

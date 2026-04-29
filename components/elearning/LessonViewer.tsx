@@ -74,6 +74,14 @@ function hrefFor(courseSlug: string, target: NavTarget | null) {
   return `/cours/${courseSlug}/quiz/${target.quiz.id}`;
 }
 
+function previewHrefFor(courseId: string, target: NavTarget | null) {
+  if (!target) return null;
+  if (target.type === "lesson") {
+    return `/admin/cours/${courseId}/apercu?lecon=${target.lesson.slug}`;
+  }
+  return null;
+}
+
 export function LessonViewer({
   mode,
   courseSlug,
@@ -133,8 +141,12 @@ export function LessonViewer({
     });
   };
 
-  const nextHref = hrefFor(courseSlug, next);
-  const prevHref = hrefFor(courseSlug, prev);
+  const nextHref = mode === "preview"
+    ? previewHrefFor(outline.course.id, next)
+    : hrefFor(courseSlug, next);
+  const prevHref = mode === "preview"
+    ? previewHrefFor(outline.course.id, prev)
+    : hrefFor(courseSlug, prev);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] bg-background">
@@ -160,7 +172,7 @@ export function LessonViewer({
                 Mode Aperçu — ce que l&apos;étudiant verra
               </span>
               <Button size="sm" variant="outline" asChild>
-                <Link href={`/admin/cours/${outline.course.slug}/editer`}>
+                <Link href={`/admin/cours/${outline.course.id}/editer`}>
                   Revenir à l&apos;édition
                 </Link>
               </Button>

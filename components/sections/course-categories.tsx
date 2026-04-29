@@ -109,7 +109,7 @@ async function CategoriesInner() {
     <section className="section-padding bg-muted/20" aria-labelledby="courses-available-heading">
       <div className="container mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <Badge variant="navy" className="mb-4">
+          <Badge variant="default" className="mb-4">
             {t("badge")}
           </Badge>
           <h2

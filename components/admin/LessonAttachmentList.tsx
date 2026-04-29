@@ -28,9 +28,8 @@ export function LessonAttachmentList({
   const [list, setList] = React.useState(attachments);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
-  React.useEffect(() => {
-    setList(attachments);
-  }, [attachments]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => { setList(attachments); }, [attachments]);
 
   const onFile = async (file: File) => {
     if (file.size > MAX_BYTES) {

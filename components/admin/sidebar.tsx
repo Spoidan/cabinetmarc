@@ -98,7 +98,7 @@ export function AdminSidebar() {
             />
           </div>
           <div className="leading-tight">
-            <p className="text-[10px] text-white/40 uppercase tracking-widest leading-none mb-0.5">
+            <p className="text-[10px] text-white/60 uppercase tracking-widest leading-none mb-0.5">
               Le Cabinet
             </p>
             <span className="text-sm font-bold text-white">
@@ -112,7 +112,7 @@ export function AdminSidebar() {
         {GROUPS.map((group, i) => (
           <div key={i}>
             {group.title && (
-              <p className="px-3 mb-2 text-[10px] uppercase tracking-widest text-white/30 font-semibold">
+              <p className="px-3 mb-2 text-[10px] uppercase tracking-widest text-white/50 font-semibold">
                 {group.title}
               </p>
             )}
@@ -127,7 +127,7 @@ export function AdminSidebar() {
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                         active
-                          ? "bg-primary/15 text-primary-foreground border border-primary/20"
+                          ? "bg-white/10 text-white border border-white/15"
                           : "text-white/60 hover:text-white hover:bg-white/5"
                       )}
                     >

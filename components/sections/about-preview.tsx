@@ -88,7 +88,7 @@ export function AboutPreview() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.1 }}
           >
-            <Badge variant="navy" className="mb-4">À Propos de Nous</Badge>
+            <Badge variant="default" className="mb-4">À Propos de Nous</Badge>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-6">
               Votre partenaire de confiance pour{" "}
               <span className="gradient-text">l&apos;excellence</span>

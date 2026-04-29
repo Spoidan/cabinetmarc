@@ -25,6 +25,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/contact(.*)",
   "/api/newsletter(.*)",
   "/api/courses(.*)",
+  "/api/certificate(.*)",
   "/api/lessons(.*)",
   "/api/webhooks(.*)",
   // Legacy English course paths (redirected in next.config)

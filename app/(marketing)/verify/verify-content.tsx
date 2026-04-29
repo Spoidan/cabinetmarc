@@ -16,11 +16,11 @@ export function VerifyContent() {
   const searchParams = useSearchParams();
   const number = searchParams.get("number");
   const [cert, setCert] = useState<CertData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [loading, setLoading] = useState(!!number);
+  const [notFound, setNotFound] = useState(!number);
 
   useEffect(() => {
-    if (!number) { setNotFound(true); setLoading(false); return; }
+    if (!number) return;
     fetch(`/api/certificate?number=${encodeURIComponent(number)}`)
       .then((r) => r.json())
       .then((json) => {

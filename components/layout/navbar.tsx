@@ -31,16 +31,17 @@ export function Navbar() {
   const [mounted, setMounted] = React.useState(false);
   const { isSignedIn } = useUser();
 
+  const isHomePage = pathname === "/";
+
   React.useEffect(() => {
-    setMounted(true);
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  React.useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => { setIsOpen(false); }, [pathname]);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -71,10 +72,16 @@ export function Navbar() {
               />
             </div>
             <div className="hidden sm:block leading-tight">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-widest leading-none mb-0.5">
+              <p className={cn(
+                "text-[11px] uppercase tracking-widest leading-none mb-0.5",
+                (!scrolled && isHomePage) ? "text-white/50" : "text-muted-foreground"
+              )}>
                 Le Cabinet
               </p>
-              <span className="text-lg font-bold tracking-tight" style={{ color: "#7B3A10" }}>
+              <span
+                className="text-lg font-bold tracking-tight transition-colors duration-300"
+                style={{ color: (!scrolled && isHomePage) ? "white" : "#7B3A10" }}
+              >
                 MARC
               </span>
             </div>
@@ -92,15 +99,20 @@ export function Navbar() {
                 className={cn(
                   "relative px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200",
                   isActive(href)
-                    ? "text-primary"
-                    : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                    ? (!scrolled && isHomePage) ? "text-white" : "text-primary"
+                    : (!scrolled && isHomePage)
+                      ? "text-white/70 hover:text-white hover:bg-white/10"
+                      : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
                 )}
               >
                 {t(key)}
                 {isActive(href) && (
                   <motion.div
                     layoutId="navbar-indicator"
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                    className={cn(
+                      "absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full",
+                      (!scrolled && isHomePage) ? "bg-white" : "bg-primary"
+                    )}
                     transition={{ type: "spring", bounce: 0.25, duration: 0.4 }}
                   />
                 )}
@@ -114,7 +126,12 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+                className={cn(
+                  "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                  (!scrolled && isHomePage)
+                    ? "text-white/60 hover:text-white hover:bg-white/10"
+                    : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                )}
                 aria-label={t("toggleTheme")}
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -123,16 +140,30 @@ export function Navbar() {
 
             {!isSignedIn ? (
               <div className="hidden sm:flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className={(!scrolled && isHomePage) ? "text-white hover:text-white hover:bg-white/10" : ""}
+                >
                   <Link href="/connexion">{t("login")}</Link>
                 </Button>
-                <Button size="sm" asChild>
+                <Button
+                  size="sm"
+                  asChild
+                  className={(!scrolled && isHomePage) ? "bg-white text-[#7B3A10] hover:bg-white/90 border-0" : ""}
+                >
                   <Link href="/inscription">{t("register")}</Link>
                 </Button>
               </div>
             ) : (
               <div className="hidden sm:flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className={(!scrolled && isHomePage) ? "text-white hover:text-white hover:bg-white/10" : ""}
+                >
                   <Link href="/mes-cours">{t("myCourses")}</Link>
                 </Button>
                 <UserButton
@@ -148,7 +179,12 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setIsOpen(!isOpen)}
-              className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+              className={cn(
+                "lg:hidden w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                (!scrolled && isHomePage)
+                  ? "text-white/60 hover:text-white hover:bg-white/10"
+                  : "text-foreground/60 hover:text-foreground hover:bg-muted"
+              )}
               aria-label={t("ariaMobile")}
               aria-expanded={isOpen}
             >

@@ -64,7 +64,7 @@ function HeroEditor({ locale }: { locale: string }) {
     subtitle: "",
     description: "",
     cta_primary_text: "Explorer nos formations",
-    cta_primary_href: "/courses",
+    cta_primary_href: "/cours",
     cta_secondary_text: "En savoir plus",
     cta_secondary_href: "/about",
     badge_text: "",
@@ -74,7 +74,6 @@ function HeroEditor({ locale }: { locale: string }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setLoadingHero(true);
     fetch(`/api/admin/hero?locale=${locale}`)
       .then((r) => r.json())
       .then(({ data: d }) => {
@@ -179,7 +178,6 @@ function PageEditor({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setLoadingContent(true);
     fetch(`/api/content?page=${pageKey}&locale=${locale}`)
       .then((r) => r.json())
       .then(({ data: rows }) => {
