@@ -33,7 +33,6 @@ const nextConfig: NextConfig = {
       // Admin French aliases
       { source: "/admin/courses", destination: "/admin/cours", permanent: true },
       { source: "/admin/courses/:path*", destination: "/admin/cours/:path*", permanent: true },
-      { source: "/admin/team", destination: "/admin/utilisateurs", permanent: true },
     ];
   },
 };
