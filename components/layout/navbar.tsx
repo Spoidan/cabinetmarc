@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { UserButton, useUser } from "@clerk/nextjs";
-import { Menu, X, Moon, Sun } from "lucide-react";
+import { Menu, X, Moon, Sun, LayoutDashboard } from "lucide-react";
 import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ const navLinks = [
   { href: "/contact", key: "contact" },
 ] as const;
 
-export function Navbar() {
+export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
@@ -52,7 +52,7 @@ export function Navbar() {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        scrolled
+        (scrolled || !isHomePage)
           ? "bg-background/95 backdrop-blur-lg border-b border-border shadow-sm"
           : "bg-transparent"
       )}
@@ -166,6 +166,19 @@ export function Navbar() {
                 >
                   <Link href="/mes-cours">{t("myCourses")}</Link>
                 </Button>
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className={(!scrolled && isHomePage) ? "border-white/30 text-white hover:bg-white/10" : ""}
+                  >
+                    <Link href="/admin">
+                      <LayoutDashboard className="w-3.5 h-3.5" />
+                      Admin
+                    </Link>
+                  </Button>
+                )}
                 <UserButton
                   appearance={{
                     elements: {
@@ -223,9 +236,9 @@ export function Navbar() {
                   {t(key)}
                 </Link>
               ))}
-              <div className="pt-3 border-t border-border flex gap-2">
+              <div className="pt-3 border-t border-border flex flex-col gap-2">
                 {!isSignedIn ? (
-                  <>
+                  <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1" asChild>
                       <Link href="/connexion" onClick={closeMobile}>
                         {t("login")}
@@ -236,13 +249,23 @@ export function Navbar() {
                         {t("register")}
                       </Link>
                     </Button>
-                  </>
+                  </div>
                 ) : (
-                  <Button variant="ghost" size="sm" className="flex-1" asChild>
-                    <Link href="/mes-cours" onClick={closeMobile}>
-                      {t("myCourses")}
-                    </Link>
-                  </Button>
+                  <>
+                    <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+                      <Link href="/mes-cours" onClick={closeMobile}>
+                        {t("myCourses")}
+                      </Link>
+                    </Button>
+                    {isAdmin && (
+                      <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+                        <Link href="/admin" onClick={closeMobile}>
+                          <LayoutDashboard className="w-3.5 h-3.5" />
+                          Panneau d&apos;administration
+                        </Link>
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </nav>

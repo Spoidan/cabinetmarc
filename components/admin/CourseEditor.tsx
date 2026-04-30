@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { TipTapEditor } from "./TipTapEditor";
 import { LessonAttachmentList } from "./LessonAttachmentList";
 import { CoverImageUploader } from "./CoverImageUploader";
+import { LessonVideoUploader } from "./LessonVideoUploader";
 import { QuizEditor } from "./QuizEditor";
 import { PublishModal } from "./PublishModal";
 import { AutosavePill } from "./AutosavePill";
@@ -906,14 +907,11 @@ function LessonPanel({
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="lesson-video">
-              Vidéo (URL YouTube/Vimeo ou chemin storage)
-            </Label>
-            <Input
-              id="lesson-video"
+            <Label>Vidéo</Label>
+            <LessonVideoUploader
+              lessonId={lesson.id}
               value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="https://youtu.be/..."
+              onChange={setVideoUrl}
             />
           </div>
           <div className="space-y-1.5">

@@ -299,20 +299,34 @@ export async function uploadLessonAttachment(
   return { ok: true, data: { attachment } };
 }
 
-export async function uploadLessonVideo(
+/** Step 1: generate a signed upload URL for a lesson video. */
+export async function createVideoUploadUrl(
   lessonId: string,
-  file: { name: string; type: string; bytes: ArrayBuffer }
-): Promise<Result<{ path: string }>> {
+  ext: string
+): Promise<Result<{ signedUrl: string; path: string }>> {
   await requireAdmin();
   const admin = createSupabaseAdminClient();
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "mp4";
-  const path = `${lessonId}/${Date.now()}.${ext}`;
-  const { error } = await admin.storage
+  const path = `${lessonId}/${Date.now()}.${ext.toLowerCase()}`;
+  const { data, error } = await admin.storage
     .from("lesson-videos")
-    .upload(path, Buffer.from(file.bytes), { contentType: file.type, upsert: true });
+    .createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: error?.message ?? "Impossible de créer l'URL." };
+  return { ok: true, data: { signedUrl: data.signedUrl, path } };
+}
+
+/** Step 2: after the browser finishes the PUT, record the storage path in the DB. */
+export async function saveVideoPath(
+  lessonId: string,
+  path: string
+): Promise<Result> {
+  await requireAdmin();
+  const admin = createSupabaseAdminClient();
+  const { error } = await admin
+    .from("course_lessons")
+    .update({ video_url: path })
+    .eq("id", lessonId);
   if (error) return { ok: false, error: error.message };
-  await admin.from("course_lessons").update({ video_url: path }).eq("id", lessonId);
-  return { ok: true, data: { path } };
+  return { ok: true };
 }
 
 export async function removeLessonAttachment(

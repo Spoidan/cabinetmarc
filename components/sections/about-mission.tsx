@@ -142,8 +142,8 @@ export function AboutMission() {
                 ].map(({ year, event }, i) => (
                   <div key={year} className="flex gap-5">
                     <div className="flex flex-col items-center">
-                      <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-                        <span className="text-primary text-xs font-bold">{year}</span>
+                      <div className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                        <span className="text-white text-xs font-bold">{year}</span>
                       </div>
                       {i < 4 && <div className="w-px h-8 bg-white/10 mt-1" />}
                     </div>
