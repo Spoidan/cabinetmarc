@@ -168,10 +168,10 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                 </Button>
                 {isAdmin && (
                   <Button
-                    variant="outline"
+                    variant={(!scrolled && isHomePage) ? "ghost" : "outline"}
                     size="sm"
                     asChild
-                    className={(!scrolled && isHomePage) ? "!bg-transparent border-white/40 text-white hover:bg-white/10 hover:text-white" : ""}
+                    className={(!scrolled && isHomePage) ? "border border-white/40 text-white hover:bg-white/10 hover:text-white" : ""}
                   >
                     <Link href="/admin">
                       <LayoutDashboard className="w-3.5 h-3.5" />

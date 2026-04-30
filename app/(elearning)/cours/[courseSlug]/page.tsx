@@ -84,49 +84,51 @@ export default async function CourseLandingPage({
 
   return (
     <div>
-      {/* Hero — light background, dark text, sidebar card */}
+      {/* 1 — Hero: title, subtitle, meta badges */}
       <section className="bg-muted/40 border-b border-border">
-        <div className="container mx-auto py-14 lg:py-20 grid lg:grid-cols-[1fr_400px] gap-10 items-start">
-          <div>
-            <Link
-              href={`/cours?categorie=${course.category?.slug ?? ""}`}
-              className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground mb-4"
-            >
-              {course.category?.name ?? "Cours"}
-            </Link>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4">
-              {course.title}
-            </h1>
-            {course.subtitle && (
-              <p className="text-muted-foreground text-lg leading-relaxed mb-6">{course.subtitle}</p>
-            )}
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <Badge variant="outline">
-                <GraduationCap className="w-3 h-3" />
-                {levelLabel(course.level)}
-              </Badge>
-              {course.duration_minutes && (
-                <span className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4" />
-                  {formatDuration(course.duration_minutes)}
-                </span>
-              )}
+        <div className="container mx-auto py-12 lg:py-16">
+          <Link
+            href={`/cours?categorie=${course.category?.slug ?? ""}`}
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground mb-4"
+          >
+            {course.category?.name ?? "Cours"}
+          </Link>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-foreground mb-4 max-w-3xl">
+            {course.title}
+          </h1>
+          {course.subtitle && (
+            <p className="text-muted-foreground text-lg leading-relaxed mb-6 max-w-2xl">{course.subtitle}</p>
+          )}
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <Badge variant="outline">
+              <GraduationCap className="w-3 h-3" />
+              {levelLabel(course.level)}
+            </Badge>
+            {course.duration_minutes && (
               <span className="flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4" />
-                {totalLessons} leçons · {totalQuizzes} quiz
+                <Clock className="w-4 h-4" />
+                {formatDuration(course.duration_minutes)}
               </span>
-            </div>
+            )}
+            <span className="flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4" />
+              {totalLessons} leçons · {totalQuizzes} quiz
+            </span>
           </div>
+        </div>
+      </section>
 
-          {/* Sidebar card */}
-          <aside className="rounded-2xl bg-card text-foreground shadow-xl overflow-hidden border border-border">
+      {/* 2 — Card: cover image + price + CTA */}
+      <div className="border-b border-border">
+        <div className="container mx-auto py-8">
+          <aside className="rounded-2xl bg-card text-foreground shadow-lg overflow-hidden border border-border max-w-sm">
             <div className="relative aspect-[16/9] bg-muted">
               {course.cover_image ? (
                 <Image
                   src={course.cover_image}
                   alt={course.title}
                   fill
-                  sizes="400px"
+                  sizes="384px"
                   className="object-cover"
                   priority
                 />
@@ -165,9 +167,9 @@ export default async function CourseLandingPage({
             </div>
           </aside>
         </div>
-      </section>
+      </div>
 
-      {/* Tabs */}
+      {/* 3 — Tabs: overview, program, reviews */}
       <section className="container mx-auto py-12">
         <Tabs defaultValue="overview">
           <TabsList>
