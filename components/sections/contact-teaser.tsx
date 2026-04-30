@@ -77,8 +77,8 @@ export function ContactTeaser() {
                     transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
                     className="flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl p-5 transition-all duration-200 group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <Icon className="w-5 h-5 text-primary" />
+                    <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <Icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <div className="text-white/40 text-xs mb-0.5">{label}</div>

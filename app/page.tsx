@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { auth } from "@clerk/nextjs/server";
+import { isAdminUser } from "@/lib/admin";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Hero } from "@/components/sections/hero";
@@ -14,10 +16,13 @@ export const metadata: Metadata = {
     "Cabinet MARC — Excellence en conseil, formation professionnelle et e-learning. Spécialisé en Économie, Gestion, Droit, Statistiques, Entrepreneuriat et TICs au Burundi.",
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { userId } = await auth();
+  const isAdmin = isAdminUser(userId);
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
+      <Navbar isAdmin={isAdmin} />
       <main className="flex-1">
         <Hero />
         <Stats />
