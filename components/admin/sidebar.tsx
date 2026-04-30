@@ -12,7 +12,6 @@ import {
   Users,
   GraduationCap,
   UserCog,
-  Newspaper,
   FileText,
   Image as ImageIcon,
   BarChart3,
@@ -57,9 +56,8 @@ const GROUPS: Group[] = [
   {
     title: "Contenu",
     items: [
-      { href: "/admin/content", label: "Actualités", icon: Newspaper },
-      { href: "/admin/pages", label: "Pages", icon: FileText },
-      { href: "/admin/media", label: "Médias", icon: ImageIcon },
+      { href: "/admin/content", label: "Contenu du site", icon: FileText },
+      { href: "/admin/media", label: "Médiathèque", icon: ImageIcon },
     ],
   },
   {
