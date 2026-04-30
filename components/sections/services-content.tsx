@@ -97,7 +97,7 @@ export function ServicesPage() {
             transition={{ duration: 0.7 }}
             className="max-w-3xl"
           >
-            <Badge variant="default" className="mb-4 bg-primary/10 text-primary border-primary/20">
+            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">
               Nos Services
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">

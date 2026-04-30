@@ -73,7 +73,7 @@ export function ContactContent() {
         }} />
         <div className="container mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
-            <Badge variant="default" className="mb-4 bg-primary/10 text-primary border-primary/20">Contact</Badge>
+            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">Contact</Badge>
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
               Nous sommes à <span className="gradient-text">votre écoute</span>
             </h1>
