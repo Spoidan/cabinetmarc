@@ -233,23 +233,39 @@ export async function publishCourse(courseId: string): Promise<Result> {
   return { ok: true };
 }
 
-// ----- uploads (server-signed)
-export async function uploadCoverImage(
+// ----- uploads (client-side direct upload via signed URL)
+
+/** Step 1: generate a short-lived signed URL the browser can PUT to directly. */
+export async function createCoverUploadUrl(
   courseId: string,
-  file: { name: string; type: string; bytes: ArrayBuffer }
-): Promise<Result<{ path: string; url: string }>> {
+  ext: string
+): Promise<Result<{ signedUrl: string; path: string }>> {
   await requireAdmin();
   const admin = createSupabaseAdminClient();
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const path = `${courseId}/${Date.now()}.${ext}`;
-  const { error } = await admin.storage
+  const path = `${courseId}/${Date.now()}.${ext.toLowerCase()}`;
+  const { data, error } = await admin.storage
     .from("course-covers")
-    .upload(path, Buffer.from(file.bytes), { contentType: file.type, upsert: true });
-  if (error) return { ok: false, error: error.message };
+    .createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: error?.message ?? "Impossible de créer l'URL." };
+  return { ok: true, data: { signedUrl: data.signedUrl, path } };
+}
+
+/** Step 2: after the browser finishes the PUT, record the public URL in the DB. */
+export async function saveCoverImageUrl(
+  courseId: string,
+  path: string
+): Promise<Result<{ url: string }>> {
+  await requireAdmin();
+  const admin = createSupabaseAdminClient();
   const { data: pub } = admin.storage.from("course-covers").getPublicUrl(path);
-  await admin.from("courses").update({ cover_image: pub.publicUrl }).eq("id", courseId);
+  await admin
+    .from("courses")
+    .update({ cover_image: pub.publicUrl, is_published: false })
+    .eq("id", courseId);
   revalidatePath(`/admin/cours/${courseId}/editer`);
-  return { ok: true, data: { path, url: pub.publicUrl } };
+  revalidatePath("/admin/cours");
+  revalidatePath("/cours");
+  return { ok: true, data: { url: pub.publicUrl } };
 }
 
 export async function uploadLessonAttachment(
