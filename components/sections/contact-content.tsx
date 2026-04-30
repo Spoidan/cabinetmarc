@@ -10,6 +10,7 @@ import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, Zap } from "lucide-reac
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { HeroContent } from "@/lib/content-defaults";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,7 +42,12 @@ const contactInfo = [
   { icon: Clock, title: "Horaires", value: "Lun - Ven : 8h - 17h", href: "#", desc: "Fermé week-end" },
 ];
 
-export function ContactContent() {
+export function ContactContent({ heroContent = {} }: { heroContent?: HeroContent }) {
+  const badge = heroContent.badge ?? "Contact";
+  const title = heroContent.title ?? "Nous sommes à votre écoute";
+  const description =
+    heroContent.description ?? "Contactez-nous pour vos besoins en conseil, formation ou recherche.";
+
   const [success, setSuccess] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -73,12 +79,12 @@ export function ContactContent() {
         }} />
         <div className="container mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
-            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">Contact</Badge>
+            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">{badge}</Badge>
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-              Nous sommes à <span className="gradient-text">votre écoute</span>
+              {title}
             </h1>
             <p className="text-white/60 text-lg">
-              Contactez-nous pour vos besoins en conseil, formation ou recherche.
+              {description}
             </p>
           </motion.div>
         </div>

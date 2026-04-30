@@ -5,6 +5,7 @@ import { Mail, ExternalLink, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import type { HeroContent } from "@/lib/content-defaults";
 
 const team = [
   {
@@ -63,7 +64,13 @@ const team = [
   },
 ];
 
-export function TeamPageContent() {
+export function TeamPageContent({ heroContent = {} }: { heroContent?: HeroContent }) {
+  const badge = heroContent.badge ?? "Notre Équipe";
+  const title = heroContent.title ?? "Des experts à votre service";
+  const description =
+    heroContent.description ??
+    "Notre équipe pluridisciplinaire réunit les meilleurs experts pour vous accompagner vers l'excellence.";
+
   return (
     <>
       {/* Hero */}
@@ -74,12 +81,12 @@ export function TeamPageContent() {
         }} />
         <div className="container mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
-            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">Notre Équipe</Badge>
+            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">{badge}</Badge>
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-              Des <span className="gradient-text">experts</span> à votre service
+              {title}
             </h1>
             <p className="text-white/60 text-lg">
-              Notre équipe pluridisciplinaire réunit les meilleurs experts pour vous accompagner vers l&apos;excellence.
+              {description}
             </p>
           </motion.div>
         </div>

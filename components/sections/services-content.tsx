@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Lightbulb, GraduationCap, Search, Monitor, CheckCircle2, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { HeroContent } from "@/lib/content-defaults";
 
 const services = [
   {
@@ -81,7 +82,13 @@ const services = [
   },
 ];
 
-export function ServicesPage() {
+export function ServicesPage({ heroContent = {} }: { heroContent?: HeroContent }) {
+  const badge = heroContent.badge ?? "Nos Services";
+  const title = heroContent.title ?? "Des services d'excellence pour votre réussite";
+  const description =
+    heroContent.description ??
+    "Cabinet MARC vous accompagne à chaque étape de votre parcours avec une gamme complète de services professionnels adaptés à vos besoins.";
+
   return (
     <>
       {/* Hero */}
@@ -98,15 +105,13 @@ export function ServicesPage() {
             className="max-w-3xl"
           >
             <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">
-              Nos Services
+              {badge}
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-              Des services d&apos;excellence pour{" "}
-              <span className="gradient-text">votre réussite</span>
+              {title}
             </h1>
             <p className="text-xl text-white/60 leading-relaxed">
-              Cabinet MARC vous accompagne à chaque étape de votre parcours avec une gamme complète
-              de services professionnels adaptés à vos besoins.
+              {description}
             </p>
           </motion.div>
         </div>

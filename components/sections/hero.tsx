@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Play, Star, TrendingUp, Users, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { HomeHeroContent } from "@/lib/content-defaults";
 
 const floatingCards = [
   { icon: Users, value: "500+", label: "Étudiants", color: "from-blue-500 to-indigo-600", delay: 0 },
@@ -12,7 +13,18 @@ const floatingCards = [
   { icon: TrendingUp, value: "10+", label: "Années", color: "from-amber-500 to-orange-600", delay: 0.4 },
 ];
 
-export function Hero() {
+export function Hero({ content = {} }: { content?: HomeHeroContent }) {
+  const badge = content.badge_text ?? "Nouveau : E-Learning disponible";
+  const title = content.title ?? "L'excellence académique au service de l'Afrique";
+  const subtitle = content.subtitle ?? "Conseil · Formation · Recherche · E-Learning";
+  const description =
+    content.description ??
+    "Cabinet MARC vous accompagne dans votre développement professionnel et institutionnel grâce à une expertise pointue en Économie, Gestion, Droit, Statistiques, Entrepreneuriat et TICs.";
+  const cta1Text = content.cta_primary_text ?? "Explorer nos formations";
+  const cta1Href = content.cta_primary_href ?? "/cours";
+  const cta2Text = content.cta_secondary_text ?? "Découvrir MARC";
+  const cta2Href = content.cta_secondary_href ?? "/about";
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden hero-gradient">
       {/* Animated background grid */}
@@ -39,7 +51,7 @@ export function Hero() {
             >
               <Badge variant="default" className="mb-6 bg-white/10 text-white border-white/20 text-xs font-semibold tracking-wide">
                 <Star className="w-3 h-3 fill-current" />
-                Nouveau : E-Learning disponible
+                {badge}
               </Badge>
             </motion.div>
 
@@ -49,9 +61,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1] mb-6"
             >
-              L&apos;excellence{" "}
-              <span className="gradient-text">académique</span>{" "}
-              au service de l&apos;Afrique
+              {title}
             </motion.h1>
 
             <motion.p
@@ -61,7 +71,7 @@ export function Hero() {
               className="text-lg text-white/60 leading-relaxed mb-4"
             >
               <span className="text-white/40 text-sm tracking-widest uppercase">
-                Conseil · Formation · Recherche · E-Learning
+                {subtitle}
               </span>
             </motion.p>
 
@@ -71,8 +81,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.25 }}
               className="text-base text-white/55 leading-relaxed mb-10 max-w-lg"
             >
-              Cabinet MARC vous accompagne dans votre développement professionnel et institutionnel
-              grâce à une expertise pointue en Économie, Gestion, Droit, Statistiques, Entrepreneuriat et TICs.
+              {description}
             </motion.p>
 
             <motion.div
@@ -82,15 +91,15 @@ export function Hero() {
               className="flex flex-col sm:flex-row items-start sm:items-center gap-4"
             >
               <Button variant="outline-white" size="xl" asChild className="group">
-                <Link href="/cours">
-                  Explorer nos formations
+                <Link href={cta1Href}>
+                  {cta1Text}
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>
               <Button variant="outline-white" size="xl" asChild className="group">
-                <Link href="/about">
+                <Link href={cta2Href}>
                   <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  Découvrir MARC
+                  {cta2Text}
                 </Link>
               </Button>
             </motion.div>

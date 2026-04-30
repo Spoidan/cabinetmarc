@@ -29,6 +29,22 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ data });
 }
 
+export async function DELETE(req: NextRequest) {
+  const { userId } = getAuth(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const adminIds = (process.env.ADMIN_USER_IDS ?? "").split(",").map((s) => s.trim());
+  if (!adminIds.includes(userId)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const supabase = getAdminSupabase();
+  const { error } = await supabase.from("page_content").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
 export async function PUT(req: NextRequest) {
   const { userId } = getAuth(req);
   if (!userId) {

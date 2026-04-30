@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Target, Eye, Heart, Users, BookOpen, Award, Calendar, CheckCircle2 } from "lucide-react";
+import type { HeroContent } from "@/lib/content-defaults";
 
 const stats = [
   { value: "500+", label: "Étudiants formés", icon: Users },
@@ -11,7 +12,13 @@ const stats = [
   { value: "10+", label: "Années", icon: Calendar },
 ];
 
-export function AboutHero() {
+export function AboutHero({ content = {} }: { content?: HeroContent }) {
+  const badge = content.badge ?? "À Propos de Cabinet MARC";
+  const title = content.title ?? "Votre partenaire de confiance pour l'excellence";
+  const description =
+    content.description ??
+    "Cabinet MARC est une institution spécialisée en conseil, formation et recherche, dédiée à l'excellence académique et professionnelle en Afrique centrale.";
+
   return (
     <section className="pt-32 pb-20 hero-gradient relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.03]" style={{
@@ -28,15 +35,13 @@ export function AboutHero() {
           className="max-w-3xl"
         >
           <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">
-            À Propos de Cabinet MARC
+            {badge}
           </Badge>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-            Votre partenaire de confiance pour{" "}
-            <span className="gradient-text">l&apos;excellence</span>
+            {title}
           </h1>
           <p className="text-xl text-white/60 leading-relaxed">
-            Cabinet MARC est une institution spécialisée en conseil, formation et recherche,
-            dédiée à l&apos;excellence académique et professionnelle en Afrique centrale.
+            {description}
           </p>
         </motion.div>
 

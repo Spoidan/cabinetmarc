@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Clock, ArrowRight, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import type { HeroContent } from "@/lib/content-defaults";
 
 const posts = [
   {
@@ -78,7 +79,13 @@ const categoryColors: Record<string, string> = {
   "TICs": "text-cyan-600 bg-cyan-50 border-cyan-200",
 };
 
-export function BlogPageContent() {
+export function BlogPageContent({ heroContent = {} }: { heroContent?: HeroContent }) {
+  const badge = heroContent.badge ?? "Blog & Ressources";
+  const title = heroContent.title ?? "Actualités & Analyses";
+  const description =
+    heroContent.description ??
+    "Découvrez nos publications, analyses et ressources rédigées par nos experts.";
+
   const featured = posts[0];
   const rest = posts.slice(1);
 
@@ -92,12 +99,12 @@ export function BlogPageContent() {
         }} />
         <div className="container mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
-            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">Blog & Ressources</Badge>
+            <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">{badge}</Badge>
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-              Actualités & <span className="gradient-text">Analyses</span>
+              {title}
             </h1>
             <p className="text-white/60 text-lg">
-              Découvrez nos publications, analyses et ressources rédigées par nos experts.
+              {description}
             </p>
           </motion.div>
         </div>

@@ -9,6 +9,7 @@ import { AboutPreview } from "@/components/sections/about-preview";
 import { CourseCategories } from "@/components/sections/course-categories";
 import { Testimonials } from "@/components/sections/testimonials";
 import { ContactTeaser } from "@/components/sections/contact-teaser";
+import { getHomeHeroContent } from "@/lib/page-content";
 
 export const metadata: Metadata = {
   title: "Cabinet MARC | Conseil, Formation & E-Learning au Burundi",
@@ -18,13 +19,16 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const { userId } = await auth();
-  const isAdmin = isAdminUser(userId);
+  const [isAdmin, heroContent] = await Promise.all([
+    Promise.resolve(isAdminUser(userId)),
+    getHomeHeroContent(),
+  ]);
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar isAdmin={isAdmin} />
       <main className="flex-1">
-        <Hero />
+        <Hero content={heroContent} />
         <Stats />
         <AboutPreview />
         <CourseCategories />
