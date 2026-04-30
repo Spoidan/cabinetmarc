@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { recomputeProgress, nextCertificateNumber } from "@/lib/elearning/progress";
-import { issueCertificatePdf } from "@/lib/elearning/certificate";
 
 type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
 
@@ -273,6 +272,7 @@ export async function issueCertificateIfNeeded(enrollmentId: string) {
 
   let pdfPath: string | null = null;
   try {
+    const { issueCertificatePdf } = await import("@/lib/elearning/certificate");
     pdfPath = await issueCertificatePdf({
       certificateNumber: number,
       studentName,
