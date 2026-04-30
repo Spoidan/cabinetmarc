@@ -1,70 +1,31 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail, ExternalLink, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { Mail, ExternalLink, ArrowRight, UserCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { HeroContent } from "@/lib/content-defaults";
+import type { TeamMember } from "@/lib/marketing/queries";
+import { getInitials } from "@/lib/utils";
 
-const team = [
-  {
-    name: "Dr. Laurent Ndihokubwayo",
-    role: "Directeur & Expert Économie",
-    bio: "Docteur en Économie, spécialisé en économie du développement et politiques macroéconomiques. 15 ans d'expérience dans le conseil aux institutions financières africaines.",
-    initials: "LN",
-    gradient: "from-emerald-500 to-teal-600",
-    linkedin: "#",
-    email: "l.ndihokubwayo@cabinetmarc.org",
-  },
-  {
-    name: "Prof. Cécile Irakoze",
-    role: "Directrice Pédagogique & Gestion",
-    bio: "Professeure en Management Stratégique, ancienne consultante Banque Mondiale. Spécialiste de la transformation organisationnelle et des ressources humaines.",
-    initials: "CI",
-    gradient: "from-sky-500 to-blue-600",
-    linkedin: "#",
-    email: "c.irakoze@cabinetmarc.org",
-  },
-  {
-    name: "Me. Patrick Ndayizeye",
-    role: "Expert Juridique & Compliance",
-    bio: "Avocat au Barreau du Burundi, spécialiste du droit des affaires et de la fiscalité internationale. Conseil de plusieurs multinationales opérant en Afrique centrale.",
-    initials: "PN",
-    gradient: "from-violet-500 to-purple-600",
-    linkedin: "#",
-    email: "p.ndayizeye@cabinetmarc.org",
-  },
-  {
-    name: "Dr. Alice Niyonkuru",
-    role: "Experte Statistiques & Recherche",
-    bio: "Docteure en Statistiques Appliquées, spécialisée en économétrie et analyse de données. Auteure de nombreuses publications sur le développement économique africain.",
-    initials: "AN",
-    gradient: "from-amber-500 to-orange-600",
-    linkedin: "#",
-    email: "a.niyonkuru@cabinetmarc.org",
-  },
-  {
-    name: "M. Eric Bigirimana",
-    role: "Expert Entrepreneuriat & Innovation",
-    bio: "Entrepreneur et mentor, fondateur de TechHub Bujumbura. Expert en création de startups, financement et développement de l'écosystème entrepreneurial africain.",
-    initials: "EB",
-    gradient: "from-rose-500 to-red-600",
-    linkedin: "#",
-    email: "e.bigirimana@cabinetmarc.org",
-  },
-  {
-    name: "M. David Hakizimana",
-    role: "Expert TICs & Transformation Digitale",
-    bio: "Ingénieur en Informatique, spécialiste de la transformation numérique pour les institutions africaines. Expert certifié AWS et Microsoft Azure.",
-    initials: "DH",
-    gradient: "from-cyan-500 to-sky-600",
-    linkedin: "#",
-    email: "d.hakizimana@cabinetmarc.org",
-  },
+const GRADIENTS = [
+  "from-emerald-500 to-teal-600",
+  "from-sky-500 to-blue-600",
+  "from-violet-500 to-purple-600",
+  "from-amber-500 to-orange-600",
+  "from-rose-500 to-red-600",
+  "from-cyan-500 to-sky-600",
 ];
 
-export function TeamPageContent({ heroContent = {} }: { heroContent?: HeroContent }) {
+export function TeamPageContent({
+  heroContent = {},
+  members = [],
+}: {
+  heroContent?: HeroContent;
+  members?: TeamMember[];
+}) {
   const badge = heroContent.badge ?? "Notre Équipe";
   const title = heroContent.title ?? "Des experts à votre service";
   const description =
@@ -82,12 +43,8 @@ export function TeamPageContent({ heroContent = {} }: { heroContent?: HeroConten
         <div className="container mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl">
             <Badge variant="default" className="mb-4 bg-white/10 text-white border-white/20">{badge}</Badge>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-              {title}
-            </h1>
-            <p className="text-white/60 text-lg">
-              {description}
-            </p>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">{title}</h1>
+            <p className="text-white/60 text-lg">{description}</p>
           </motion.div>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent" />
@@ -96,53 +53,77 @@ export function TeamPageContent({ heroContent = {} }: { heroContent?: HeroConten
       {/* Team grid */}
       <section className="section-padding">
         <div className="container mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {team.map(({ name, role, bio, initials, gradient, linkedin, email }, i) => (
-              <motion.div
-                key={name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                className="group rounded-2xl border border-border bg-card hover:shadow-xl transition-all duration-300 overflow-hidden"
-              >
-                {/* Top gradient */}
-                <div className={`h-24 bg-gradient-to-br ${gradient} relative`}>
-                  <div className="absolute -bottom-8 left-6">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-xl font-bold border-4 border-card shadow-lg`}>
-                      {initials}
+          {members.length === 0 ? (
+            <div className="py-20 text-center text-muted-foreground">
+              <UserCircle2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>L&apos;équipe sera présentée prochainement.</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {members.map((member, i) => (
+                <motion.div
+                  key={member.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="group rounded-2xl border border-border bg-card hover:shadow-xl transition-all duration-300 overflow-hidden"
+                >
+                  {/* Top gradient with photo */}
+                  <div className={`h-24 bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} relative`}>
+                    <div className="absolute -bottom-8 left-6">
+                      {member.image_url ? (
+                        <div className="w-16 h-16 rounded-2xl border-4 border-card shadow-lg overflow-hidden bg-muted">
+                          <Image
+                            src={member.image_url}
+                            alt={member.name}
+                            width={64}
+                            height={64}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} flex items-center justify-center text-white text-xl font-bold border-4 border-card shadow-lg`}>
+                          {getInitials(member.name)}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="pt-12 p-6">
-                  <h3 className="font-bold text-lg mb-1">{name}</h3>
-                  <p className="text-sm text-primary font-medium mb-4">{role}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">{bio}</p>
-
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={`mailto:${email}`}
-                      className="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-colors"
-                      aria-label="Email"
-                    >
-                      <Mail className="w-4 h-4" />
-                    </a>
-                    <a
-                      href={linkedin}
-                      className="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-colors"
-                      aria-label="LinkedIn"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                  <div className="pt-12 p-6">
+                    <h3 className="font-bold text-lg mb-1">{member.name}</h3>
+                    <p className="text-sm text-primary font-medium mb-4">{member.role_fr}</p>
+                    {member.bio_fr && (
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-6">{member.bio_fr}</p>
+                    )}
+                    <div className="flex items-center gap-2">
+                      {member.email && (
+                        <a
+                          href={`mailto:${member.email}`}
+                          className="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-colors"
+                          aria-label="Email"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </a>
+                      )}
+                      {member.linkedin_url && member.linkedin_url !== "#" && (
+                        <a
+                          href={member.linkedin_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-9 h-9 rounded-lg bg-muted hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-colors"
+                          aria-label="LinkedIn"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
 
-          {/* CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

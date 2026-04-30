@@ -20,6 +20,8 @@ import {
   Settings,
   Home,
   ClipboardList,
+  Newspaper,
+  UserCircle2,
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -57,6 +59,8 @@ const GROUPS: Group[] = [
     title: "Contenu",
     items: [
       { href: "/admin/content", label: "Contenu du site", icon: FileText },
+      { href: "/admin/blog", label: "Blog & Articles", icon: Newspaper },
+      { href: "/admin/team", label: "Équipe", icon: UserCircle2 },
       { href: "/admin/media", label: "Médiathèque", icon: ImageIcon },
     ],
   },

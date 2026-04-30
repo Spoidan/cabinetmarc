@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { TeamPageContent } from "@/components/sections/team-content";
 import { getHeroContent } from "@/lib/page-content";
+import { getActiveTeamMembers } from "@/lib/marketing/queries";
 
 export const metadata: Metadata = {
   title: "Notre Équipe",
@@ -9,6 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default async function TeamPage() {
-  const heroContent = await getHeroContent("team");
-  return <TeamPageContent heroContent={heroContent} />;
+  const [heroContent, members] = await Promise.all([
+    getHeroContent("team"),
+    getActiveTeamMembers(),
+  ]);
+  return <TeamPageContent heroContent={heroContent} members={members} />;
 }
