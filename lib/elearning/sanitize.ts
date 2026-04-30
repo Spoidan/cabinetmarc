@@ -1,21 +1,43 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 
-/**
- * Sanitize HTML produced by the TipTap editor. Allows a rich but safe subset.
- * Keep this in one place so both SSR and client use identical rules.
- */
+const ALLOWED_TAGS = [
+  // Structure
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "p", "br", "hr", "div", "span",
+  "ul", "ol", "li",
+  "blockquote", "pre", "code",
+  "strong", "b", "em", "i", "u", "s", "mark",
+  "sup", "sub",
+  // Media / embeds
+  "img", "figure", "figcaption",
+  "iframe",
+  // Links
+  "a",
+  // Tables
+  "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
+];
+
+const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
+  "*": ["class", "id", "style"],
+  "a": ["href", "target", "rel"],
+  "img": ["src", "alt", "width", "height", "loading"],
+  "iframe": [
+    "src", "width", "height",
+    "allow", "allowfullscreen", "frameborder", "scrolling",
+  ],
+  "td": ["colspan", "rowspan"],
+  "th": ["colspan", "rowspan", "scope"],
+};
+
 export function sanitizeLessonHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ADD_TAGS: ["iframe"],
-    ADD_ATTR: [
-      "allow",
-      "allowfullscreen",
-      "frameborder",
-      "scrolling",
-      "target",
-      "rel",
-      "loading",
+  return sanitizeHtml(html, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: ALLOWED_ATTRIBUTES,
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    allowedIframeHostnames: [
+      "www.youtube.com", "youtube.com",
+      "player.vimeo.com", "vimeo.com",
+      "www.loom.com",
     ],
-    FORBID_ATTR: ["onerror", "onclick", "onload"],
   });
 }
