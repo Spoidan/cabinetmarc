@@ -122,21 +122,23 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {mounted && (
-              <button
-                type="button"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
-                  (!scrolled && isHomePage)
-                    ? "text-white/60 hover:text-white hover:bg-white/10"
-                    : "text-foreground/60 hover:text-foreground hover:bg-muted"
-                )}
-                aria-label={t("toggleTheme")}
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-            )}
+            <div className="hidden">
+              {mounted && (
+                <button
+                  type="button"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className={cn(
+                    "w-9 h-9 rounded-lg flex items-center justify-center transition-colors",
+                    (!scrolled && isHomePage)
+                      ? "text-white/60 hover:text-white hover:bg-white/10"
+                      : "text-foreground/60 hover:text-foreground hover:bg-muted"
+                  )}
+                  aria-label={t("toggleTheme")}
+                >
+                  {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </button>
+              )}
+            </div>
 
             {!isSignedIn ? (
               <div className="hidden sm:flex items-center gap-2">
@@ -167,17 +169,18 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
                   <Link href="/mes-cours">{t("myCourses")}</Link>
                 </Button>
                 {isAdmin && (
-                  <Button
-                    variant={(!scrolled && isHomePage) ? "ghost" : "outline"}
-                    size="sm"
-                    asChild
-                    className={(!scrolled && isHomePage) ? "border border-white/40 text-white hover:bg-white/10 hover:text-white" : ""}
+                  <Link
+                    href="/admin"
+                    className={cn(
+                      "inline-flex items-center gap-1.5 h-9 rounded-lg px-4 text-xs font-semibold transition-all duration-200",
+                      (!scrolled && isHomePage)
+                        ? "border border-white/50 text-white bg-transparent hover:bg-white/10"
+                        : "border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white"
+                    )}
                   >
-                    <Link href="/admin">
-                      <LayoutDashboard className="w-3.5 h-3.5" />
-                      Admin
-                    </Link>
-                  </Button>
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    Admin
+                  </Link>
                 )}
                 <UserButton
                   appearance={{

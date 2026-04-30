@@ -81,8 +81,8 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.35 }}
               className="flex flex-col sm:flex-row items-start sm:items-center gap-4"
             >
-              <Button size="xl" asChild className="group">
-                <Link href="/courses">
+              <Button variant="outline-white" size="xl" asChild className="group">
+                <Link href="/cours">
                   Explorer nos formations
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
