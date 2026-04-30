@@ -31,6 +31,7 @@ type Props = {
   previewVisited: boolean;
   onSelect: (s: Selection) => void;
   refresh: () => void;
+  onPublished?: () => void;
 };
 
 type Check = {
@@ -49,6 +50,7 @@ export function PublishModal({
   previewVisited,
   onSelect,
   refresh,
+  onPublished,
 }: Props) {
   const router = useRouter();
   const [pending, setPending] = React.useState(false);
@@ -103,6 +105,7 @@ export function PublishModal({
       return;
     }
     toast.success("Cours publié.");
+    onPublished?.();
     onOpenChange(false);
     refresh();
     router.push(`/admin/cours/${course.id}/editer`);

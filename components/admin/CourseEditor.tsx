@@ -79,7 +79,11 @@ export function CourseEditor({ outline, categories }: Props) {
   const [selection, setSelection] = React.useState<Selection>({ kind: "course" });
   const [savedAt, setSavedAt] = React.useState<Date | null>(null);
   const [pending, setPending] = React.useState(false);
-  const [previewVisitedThisSession, setPreviewVisitedThisSession] = React.useState(false);
+  const previewKey = `cm_preview_${course.id}`;
+  const [previewVisitedThisSession, setPreviewVisitedThisSession] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`cm_preview_${course.id}`) === "true";
+  });
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState<
     | { kind: "module"; id: string; title: string }
@@ -429,13 +433,14 @@ export function CourseEditor({ outline, categories }: Props) {
             <Button
               variant="outline"
               size="sm"
-              asChild
-              onClick={() => setPreviewVisitedThisSession(true)}
+              onClick={() => {
+                localStorage.setItem(previewKey, "true");
+                setPreviewVisitedThisSession(true);
+                window.open(`/admin/cours/${course.id}/apercu`, "_blank", "noopener");
+              }}
             >
-              <Link href={`/admin/cours/${course.id}/apercu`} target="_blank">
-                <Eye className="w-4 h-4" />
-                Aperçu
-              </Link>
+              <Eye className="w-4 h-4" />
+              Aperçu
             </Button>
             <Button
               size="sm"
@@ -547,6 +552,10 @@ export function CourseEditor({ outline, categories }: Props) {
         previewVisited={previewVisitedThisSession}
         onSelect={(s) => setSelection(s)}
         refresh={refresh}
+        onPublished={() => {
+          localStorage.removeItem(previewKey);
+          setPreviewVisitedThisSession(false);
+        }}
       />
 
       <ConfirmDialog
