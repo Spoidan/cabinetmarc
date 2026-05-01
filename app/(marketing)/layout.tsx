@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/footer";
 
 export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
-  const isAdmin = isAdminUser(userId);
+  const isAdmin = await isAdminUser(userId);
 
   return (
     <div className="flex flex-col min-h-screen">

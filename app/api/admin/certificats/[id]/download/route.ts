@@ -1,11 +1,9 @@
-import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { isAdminUser } from "@/lib/admin";
+import { NextRequest, NextResponse } from "next/server";
+import { isAdminFromRequest } from "@/lib/admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!isAdminUser(userId)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!await isAdminFromRequest(req as NextRequest)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const admin = createSupabaseAdminClient();

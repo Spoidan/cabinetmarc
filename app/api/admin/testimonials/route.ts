@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
+import { isAdminFromRequest } from "@/lib/admin";
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 }
 
-function isAdmin(req: NextRequest): boolean {
-  const { userId } = getAuth(req);
-  if (!userId) return false;
-  return (process.env.ADMIN_USER_IDS ?? "").split(",").map((s) => s.trim()).includes(userId);
-}
-
 export async function GET(req: NextRequest) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!await isAdminFromRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { data, error } = await db()
     .from("testimonials")
@@ -26,7 +20,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!await isAdminFromRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id, is_approved } = await req.json();
   const { data, error } = await db()
@@ -41,7 +35,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!await isAdminFromRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await req.json();
   const { error } = await db().from("testimonials").delete().eq("id", id);

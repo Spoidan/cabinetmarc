@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const { userId } = await auth();
   const [isAdmin, heroContent, approvedTestimonials, ownTestimonial] = await Promise.all([
-    Promise.resolve(isAdminUser(userId)),
+    isAdminUser(userId),
     getHomeHeroContent(),
     getApprovedTestimonials(),
     userId ? getUserOwnTestimonial(userId) : Promise.resolve(null),
