@@ -10,6 +10,7 @@ import { CourseCategories } from "@/components/sections/course-categories";
 import { Testimonials } from "@/components/sections/testimonials";
 import { ContactTeaser } from "@/components/sections/contact-teaser";
 import { getHomeHeroContent } from "@/lib/page-content";
+import { getApprovedTestimonials, getUserOwnTestimonial } from "@/lib/marketing/queries";
 
 export const metadata: Metadata = {
   title: "Cabinet MARC | Conseil, Formation & E-Learning au Burundi",
@@ -19,9 +20,11 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const { userId } = await auth();
-  const [isAdmin, heroContent] = await Promise.all([
+  const [isAdmin, heroContent, approvedTestimonials, ownTestimonial] = await Promise.all([
     Promise.resolve(isAdminUser(userId)),
     getHomeHeroContent(),
+    getApprovedTestimonials(),
+    userId ? getUserOwnTestimonial(userId) : Promise.resolve(null),
   ]);
 
   return (
@@ -32,7 +35,11 @@ export default async function HomePage() {
         <Stats />
         <AboutPreview />
         <CourseCategories />
-        <Testimonials />
+        <Testimonials
+          approvedTestimonials={approvedTestimonials}
+          userId={userId ?? null}
+          ownTestimonial={ownTestimonial}
+        />
         <ContactTeaser />
       </main>
       <Footer />

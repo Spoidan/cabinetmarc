@@ -34,6 +34,43 @@ export type BlogPost = {
   author_name: string | null;
 };
 
+export type Testimonial = {
+  id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+};
+
+export type OwnTestimonial = Testimonial & { is_approved: boolean };
+
+export async function getApprovedTestimonials(): Promise<Testimonial[]> {
+  try {
+    const { data } = await getSupabase()
+      .from("testimonials")
+      .select("id, name, rating, comment, created_at")
+      .eq("is_approved", true)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getUserOwnTestimonial(userId: string): Promise<OwnTestimonial | null> {
+  try {
+    const { data } = await getSupabase()
+      .from("testimonials")
+      .select("id, name, rating, comment, is_approved, created_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getActiveTeamMembers(): Promise<TeamMember[]> {
   try {
     const { data } = await getSupabase()
