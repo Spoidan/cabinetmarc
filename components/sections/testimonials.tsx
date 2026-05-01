@@ -310,7 +310,7 @@ export function Testimonials({
                   <Button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="w-full"
+                    className="w-full text-white"
                   >
                     {submitting
                       ? <><Loader2 className="w-4 h-4 animate-spin" /> Envoi en cours…</>
