@@ -70,27 +70,27 @@ export function TeamPageContent({
                   className="group rounded-2xl border border-border bg-card hover:shadow-xl transition-all duration-300 overflow-hidden"
                 >
                   {/* Top gradient with photo */}
-                  <div className={`h-24 bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} relative`}>
-                    <div className="absolute -bottom-8 left-6">
+                  <div className={`h-36 bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} relative`}>
+                    <div className="absolute -bottom-14 left-6">
                       {member.image_url ? (
-                        <div className="w-16 h-16 rounded-2xl border-4 border-card shadow-lg overflow-hidden bg-muted">
+                        <div className="w-28 h-28 rounded-2xl border-4 border-card shadow-lg overflow-hidden bg-muted">
                           <Image
                             src={member.image_url}
                             alt={member.name}
-                            width={64}
-                            height={64}
+                            width={112}
+                            height={112}
                             className="object-cover w-full h-full"
                           />
                         </div>
                       ) : (
-                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} flex items-center justify-center text-white text-xl font-bold border-4 border-card shadow-lg`}>
+                        <div className={`w-28 h-28 rounded-2xl bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} flex items-center justify-center text-white text-2xl font-bold border-4 border-card shadow-lg`}>
                           {getInitials(member.name)}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="pt-12 p-6">
+                  <div className="pt-20 p-6">
                     <h3 className="font-bold text-lg mb-1">{member.name}</h3>
                     <p className="text-sm text-primary font-medium mb-4">{member.role_fr}</p>
                     {member.bio_fr && (

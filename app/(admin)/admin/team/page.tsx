@@ -122,7 +122,7 @@ export default function AdminTeamPage() {
                   )}
                 </div>
                 <div className="absolute top-2 right-2">
-                  <Badge variant={m.is_active ? "emerald" : "outline"} className="text-[10px]">
+                  <Badge variant={m.is_active ? "emerald" : "outline"} className={`text-[10px] ${m.is_active ? "text-white" : ""}`}>
                     {m.is_active ? "Visible" : "Masqué"}
                   </Badge>
                 </div>
