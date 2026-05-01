@@ -136,7 +136,7 @@ export default function CompleterProfilPage() {
               </div>
             </div>
 
-            <Button onClick={save} disabled={saving} className="w-full text-white">
+            <Button onClick={save} disabled={saving} className="w-full bg-black hover:bg-black/90 text-white border-0">
               {saving
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Enregistrement…</>
                 : <><ArrowRight className="w-4 h-4" /> Accéder à mon espace</>
