@@ -13,7 +13,7 @@ const values = [
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
     description:
-      "Démocratiser l'accès à l'expertise académique et professionnelle en Afrique centrale, en offrant des formations et services de conseil de qualité internationale.",
+      "Démocratiser l'accès à l'expertise académique et professionnelle en Afrique , en offrant des formations et services de conseil de qualité internationale.",
   },
   {
     icon: Eye,
@@ -89,12 +89,12 @@ export function AboutMission() {
           >
             <Badge variant="navy" className="mb-4">Notre Histoire</Badge>
             <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-              Une décennie d&apos;excellence et d&apos;impact
+              5 ans d&apos;excellence et d&apos;impact
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
               Cabinet MARC a été fondé avec la conviction profonde que l&apos;excellence académique
               et professionnelle devait être accessible à tous les acteurs du développement
-              africain. Depuis plus de 10 ans, nous avons accompagné des centaines de
+              africain. Depuis 2020, nous avons accompagné des centaines de
               professionnels, d&apos;institutions et d&apos;organisations dans leur quête d&apos;excellence.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-8">
@@ -134,11 +134,11 @@ export function AboutMission() {
 
               <div className="relative z-10 space-y-6">
                 {[
-                  { year: "2013", event: "Fondation de Cabinet MARC à Bujumbura" },
-                  { year: "2015", event: "Lancement du premier programme de formation certifiante" },
-                  { year: "2018", event: "Extension des services de conseil institutionnel" },
-                  { year: "2021", event: "Ouverture de la plateforme e-learning" },
-                  { year: "2024", event: "500+ professionnels formés, 50+ cours disponibles" },
+                  { year: "2020", event: "Fondation de Cabinet MARC à Bujumbura" },
+                  { year: "2021", event: "Lancement du premier programme de formation certifiante" },
+                  { year: "2023", event: "Extension des services de conseil institutionnel" },
+                  { year: "2025", event: "500+ professionnels accompagnés en conseil et formation" },
+                  { year: "2026", event: "Lancement de la plateforme e-learning" },
                 ].map(({ year, event }, i) => (
                   <div key={year} className="flex gap-5">
                     <div className="flex flex-col items-center">

@@ -10,7 +10,7 @@ import type { HomeHeroContent } from "@/lib/content-defaults";
 const floatingCards = [
   { icon: Users, value: "500+", label: "Étudiants", color: "from-blue-500 to-indigo-600", delay: 0 },
   { icon: Award, value: "50+", label: "Cours", color: "from-emerald-500 to-teal-600", delay: 0.2 },
-  { icon: TrendingUp, value: "10+", label: "Années", color: "from-amber-500 to-orange-600", delay: 0.4 },
+  { icon: TrendingUp, value: "5+", label: "Années", color: "from-amber-500 to-orange-600", delay: 0.4 },
 ];
 
 export function Hero({ content = {} }: { content?: HomeHeroContent }) {

@@ -46,7 +46,7 @@ export function AboutPreview() {
                   </svg>
                 </div>
                 <div className="text-center text-white">
-                  <div className="text-4xl font-bold mb-1">10+</div>
+                  <div className="text-4xl font-bold mb-1">5+</div>
                   <div className="text-white/70 text-sm">Années d&apos;excellence</div>
                 </div>
                 {/* Values row */}

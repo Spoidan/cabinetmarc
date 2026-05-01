@@ -10,7 +10,7 @@ const stats = [
   { value: "500+", label_fr: "Étudiants formés", icon: "Users", color: "text-blue-500", bg: "bg-blue-500/10" },
   { value: "50+", label_fr: "Cours disponibles", icon: "BookOpen", color: "text-emerald-500", bg: "bg-emerald-500/10" },
   { value: "15+", label_fr: "Experts consultants", icon: "Award", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { value: "10+", label_fr: "Années d'expérience", icon: "Calendar", color: "text-purple-500", bg: "bg-purple-500/10" },
+  { value: "5+", label_fr: "Années d'expérience", icon: "Calendar", color: "text-purple-500", bg: "bg-purple-500/10" },
 ];
 
 export function Stats() {

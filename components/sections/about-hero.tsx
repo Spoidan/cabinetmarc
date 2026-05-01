@@ -9,7 +9,7 @@ const stats = [
   { value: "500+", label: "Étudiants formés", icon: Users },
   { value: "50+", label: "Cours", icon: BookOpen },
   { value: "15+", label: "Experts", icon: Award },
-  { value: "10+", label: "Années", icon: Calendar },
+  { value: "5+", label: "Années", icon: Calendar },
 ];
 
 export function AboutHero({ content = {} }: { content?: HeroContent }) {
