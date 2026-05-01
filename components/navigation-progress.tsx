@@ -1,6 +1,6 @@
 "use client";
 
-import NextTopLoader from "next-top-loader";
+import NextTopLoader from "nextjs-toploader";
 
 export function NavigationProgress() {
   return (
