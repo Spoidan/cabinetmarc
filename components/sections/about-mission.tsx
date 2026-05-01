@@ -53,7 +53,7 @@ export function AboutMission() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <Badge variant="navy" className="mb-4">Notre Identité</Badge>
+          <Badge variant="navy" className="mb-4 !text-black">Notre Identité</Badge>
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">Mission, Vision & Valeurs</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Cabinet MARC est animé par une ambition claire : contribuer activement au développement

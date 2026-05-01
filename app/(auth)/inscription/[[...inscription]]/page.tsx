@@ -37,8 +37,8 @@ export default async function InscriptionPage() {
             path="/inscription"
             routing="path"
             signInUrl="/connexion"
-            forceRedirectUrl="/mes-cours"
-            fallbackRedirectUrl="/mes-cours"
+            forceRedirectUrl="/completer-profil"
+            fallbackRedirectUrl="/completer-profil"
             appearance={{
               variables: {
                 colorPrimary: "#7B3A10",

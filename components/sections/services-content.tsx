@@ -138,7 +138,7 @@ export function ServicesPage({ heroContent = {} }: { heroContent?: HeroContent }
                     <Icon className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold mb-2">{title}</h3>
-                  <p className="text-muted-foreground text-sm mb-6">{subtitle}</p>
+                  <p className="text-black text-sm font-medium mb-6">{subtitle}</p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -150,7 +150,7 @@ export function ServicesPage({ heroContent = {} }: { heroContent?: HeroContent }
 
               {/* Content */}
               <div className={i % 2 === 1 ? "lg:col-start-1" : ""}>
-                <Badge variant="navy" className="mb-4">{subtitle}</Badge>
+                <Badge variant="navy" className="mb-4 !text-black">{subtitle}</Badge>
                 <h2 className="text-3xl sm:text-4xl font-bold mb-5">{title}</h2>
                 <p className="text-muted-foreground leading-relaxed mb-8">{description}</p>
                 <ul className="space-y-3 mb-8">
