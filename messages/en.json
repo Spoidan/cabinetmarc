@@ -27,6 +27,15 @@
     "cta_secondary": "Discover Cabinet MARC"
   },
   "home": {
+    "actualite": {
+      "badge": "News",
+      "title": "Latest News",
+      "subtitle": "Stay informed about the latest publications, events and resources from Cabinet MARC.",
+      "readMore": "Read article",
+      "viewAll": "View all news",
+      "empty": "No news available at the moment.",
+      "minRead": "min read"
+    },
     "coursesAvailable": {
       "badge": "Our domains",
       "title": "Available Courses",

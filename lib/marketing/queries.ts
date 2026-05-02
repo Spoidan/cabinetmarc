@@ -84,6 +84,30 @@ export async function getActiveTeamMembers(): Promise<TeamMember[]> {
   }
 }
 
+export async function getRecentBlogPosts(limit = 3): Promise<BlogPost[]> {
+  try {
+    const { data } = await getSupabase()
+      .from("blog_posts")
+      .select("id, slug, title_fr, excerpt_fr, category, image_url, published_at, read_time, created_at, author:team_members(name)")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false })
+      .limit(limit);
+
+    return (data ?? []).map((p: Record<string, unknown>) => {
+      const { author, ...rest } = p;
+      return {
+        ...rest,
+        content_fr: "",
+        tags: [],
+        is_published: true,
+        author_name: (author as { name: string } | null)?.name ?? null,
+      } as unknown as BlogPost;
+    });
+  } catch {
+    return [];
+  }
+}
+
 export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
   try {
     const { data } = await getSupabase()

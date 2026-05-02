@@ -27,6 +27,15 @@
     "cta_secondary": "Découvrir Cabinet MARC"
   },
   "home": {
+    "actualite": {
+      "badge": "Actualités",
+      "title": "Dernières Nouvelles",
+      "subtitle": "Restez informé des dernières publications, événements et ressources de Cabinet MARC.",
+      "readMore": "Lire l'article",
+      "viewAll": "Voir toutes les actualités",
+      "empty": "Aucune actualité disponible pour le moment.",
+      "minRead": "min de lecture"
+    },
     "coursesAvailable": {
       "badge": "Nos domaines",
       "title": "Cours Disponibles",

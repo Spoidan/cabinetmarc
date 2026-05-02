@@ -9,8 +9,9 @@ import { AboutPreview } from "@/components/sections/about-preview";
 import { CourseCategories } from "@/components/sections/course-categories";
 import { Testimonials } from "@/components/sections/testimonials";
 import { ContactTeaser } from "@/components/sections/contact-teaser";
+import { Actualite } from "@/components/sections/actualite";
 import { getHomeHeroContent } from "@/lib/page-content";
-import { getApprovedTestimonials, getUserOwnTestimonial } from "@/lib/marketing/queries";
+import { getApprovedTestimonials, getUserOwnTestimonial, getRecentBlogPosts } from "@/lib/marketing/queries";
 
 export const metadata: Metadata = {
   title: "Cabinet MARC | Conseil, Formation & E-Learning au Burundi",
@@ -20,9 +21,10 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const { userId } = await auth();
-  const [isAdmin, heroContent, approvedTestimonials, ownTestimonial] = await Promise.all([
+  const [isAdmin, heroContent, recentPosts, approvedTestimonials, ownTestimonial] = await Promise.all([
     isAdminUser(userId),
     getHomeHeroContent(),
+    getRecentBlogPosts(3),
     getApprovedTestimonials(),
     userId ? getUserOwnTestimonial(userId) : Promise.resolve(null),
   ]);
@@ -33,8 +35,9 @@ export default async function HomePage() {
       <main className="flex-1">
         <Hero content={heroContent} />
         <Stats />
-        <AboutPreview />
+        <Actualite posts={recentPosts} />
         <CourseCategories />
+        <AboutPreview />
         <Testimonials
           approvedTestimonials={approvedTestimonials}
           userId={userId ?? null}
