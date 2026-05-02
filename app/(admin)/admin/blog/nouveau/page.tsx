@@ -74,8 +74,9 @@ export default function NewBlogPostPage() {
     });
 
     if (res.ok) {
+      const json = await res.json();
       toast.success(publish ? "Article publié." : "Brouillon enregistré.");
-      router.push("/admin/blog");
+      router.push(`/admin/blog/${json.data.id}`);
     } else {
       const json = await res.json();
       toast.error(json.error ?? "Erreur lors de l'enregistrement.");

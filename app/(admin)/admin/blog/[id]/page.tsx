@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Loader2, Eye, EyeOff, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Eye, EyeOff, Trash2, ScanEye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,6 +128,14 @@ export default function EditBlogPostPage() {
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="ghost" size="sm" onClick={deletePost} className="text-destructive hover:text-destructive">
             <Trash2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`/admin/blog/${id}/apercu`, "_blank", "noopener")}
+          >
+            <ScanEye className="w-4 h-4" />
+            Aperçu
           </Button>
           <Button variant="outline" onClick={() => save(true)} disabled={saving || publishing}>
             {publishing ? <Loader2 className="w-4 h-4 animate-spin" /> : form.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
